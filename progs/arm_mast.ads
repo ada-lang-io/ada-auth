@@ -44,7 +44,7 @@ package ARM_Master is
     --  3/17/16 - RLB - Added Base_Change_Version.
     --  4/ 8/22 - RLB - Added ReST output format.
 
-    type Output_Format_Type is (HTML, RTF, Text, Corr, Info, ReST);
+    type Output_Format_Type is (HTML, RTF, Text, Corr, Info, ReST, Tracer, Ada_Lang_IO);
 
     procedure Read_and_Process_Master_File (
 	File_Name : in String;

@@ -4,9 +4,9 @@ version = "0.1.0-dev"
 website = "http://www.ada-auth.org/arm.html"
 licenses = "GPL-3.0-only"
 
-authors = ["Randy Brukardt"]
-maintainers = ["Max Reznik <reznikmm@gmail.com>"]
-maintainers-logins = ["reznikmm"]
+authors = ["Randy Brukardt", "Paul Jarrett"]
+maintainers = ["Paul Jarrett <jarrett.paul.young@gmail.com>", "Max Reznik <reznikmm@gmail.com>"]
+maintainers-logins = ["pyjarrett", "reznikmm"]
 
 executables = ["ada_form"]
 project-files = ["ada_form.gpr"]

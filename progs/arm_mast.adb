@@ -13,7 +13,9 @@ with ARM_Input,
      ARM_Corr,
      ARM_Blackhole,
      ARM_Paragraph,
-     ARM_Contents;
+     ARM_Contents,
+	  ARM_Tracer,
+	  ARM_Ada_Lang_IO;
 package body ARM_Master is
 
     --
@@ -1701,7 +1703,7 @@ package body ARM_Master is
 		when A_File =>
                     if Source_Data(Source_Index).Omit_from_Output then
 		        Ada.Text_IO.Put_Line ("-- Omit " &
-                            Source_Data(Source_Index).File_Name(1..Source_Data(Source_Index).File_Name_Len) & " from output");                        
+                            Source_Data(Source_Index).File_Name(1..Source_Data(Source_Index).File_Name_Len) & " from output");
 		        ARM_Format.Process (Format_Object,
 		            Source_Data(Source_Index).File_Name(1..Source_Data(Source_Index).File_Name_Len),
 		            Blackhole_Output_Object,
@@ -1890,7 +1892,31 @@ package body ARM_Master is
 	        --    Generate_Sources (Output);
 	        --    ARM_Rest.Close (Output);
 	        --end;
-        end case;
+		when Tracer =>
+			declare
+				Output : ARM_Tracer.Tracer_Output_Type;
+			begin
+				ARM_Tracer.Create (Output,
+				     File_Prefix => +Output_File_Prefix,
+				     Output_Path => Output_Path,
+				     Title => Get_Versioned_String(Document_Title,Change_Version)
+				);
+				Generate_Sources (Output);
+				ARM_Tracer.Close (Output);
+			end;
+		when Ada_Lang_IO =>
+			declare
+				Output : ARM_Ada_Lang_IO.Ada_Lang_IO_Output_Type;
+			begin
+				ARM_Ada_Lang_IO.Create (Output,
+				     File_Prefix => +Output_File_Prefix,
+				     Output_Path => Output_Path,
+				     Title => Get_Versioned_String(Document_Title,Change_Version)
+				);
+				Generate_Sources (Output);
+				ARM_Ada_Lang_IO.Close (Output);
+			end;
+		end case;
 
     end Read_and_Process_Master_File;
 

@@ -1,0 +1,9 @@
+name = "ada_form"
+description = "Formatted output of the Ada Reference Manual"
+version = "0.1.0-dev"
+
+authors = ["Paul Jarrett"]
+maintainers = ["Paul Jarrett <jarrett.paul.young@gmail.com>"]
+maintainers-logins = ["pyjarrett"]
+
+executables = ["ada_form"]

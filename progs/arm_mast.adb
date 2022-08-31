@@ -12,7 +12,9 @@ with ARM_Input,
      ARM_RTF,
      ARM_Corr,
      ARM_Master,
-     ARM_Contents;
+	  ARM_Tracer,
+     ARM_Contents,
+	  ARM_Ada_Lang_IO;
 package body ARM_Master is
 
     --
@@ -1447,7 +1449,31 @@ package body ARM_Master is
 	            Generate_Sources (Output);
 	            ARM_TexInfo.Close (Output);
 	        end;
-        end case;
+		when Tracer =>
+			declare
+				Output : ARM_Tracer.Tracer_Output_Type;
+			begin
+				ARM_Tracer.Create (Output,
+				     File_Prefix => +Output_File_Prefix,
+				     Output_Path => Output_Path,
+				     Title => Get_Versioned_String(Document_Title,Change_Version)
+				);
+				Generate_Sources (Output);
+				ARM_Tracer.Close (Output);
+			end;
+		when Ada_Lang_IO =>
+			declare
+				Output : ARM_Ada_Lang_IO.Ada_Lang_IO_Output_Type;
+			begin
+				ARM_Ada_Lang_IO.Create (Output,
+				     File_Prefix => +Output_File_Prefix,
+				     Output_Path => Output_Path,
+				     Title => Get_Versioned_String(Document_Title,Change_Version)
+				);
+				Generate_Sources (Output);
+				ARM_Ada_Lang_IO.Close (Output);
+			end;
+		end case;
 
     end Read_and_Process_Master_File;
 

@@ -254,6 +254,10 @@ procedure ARM_Formatter is
 		    Format := ARM_Master.Corr;
 		elsif Format_Arg = "info" then
 		    Format := ARM_Master.Info;
+		elsif Format_Arg = "tracer" then
+			Format := ARM_Master.Tracer;
+		elsif Format_Arg = "ada_lang_io" then
+			Format := ARM_Master.Ada_Lang_IO;
 		else
 		    Ada.Text_IO.Put_Line ("** Unrecognized format: " & Format_Arg);
 		    raise No_Command_Error;
@@ -281,7 +285,9 @@ procedure ARM_Formatter is
 	    Ada.Text_IO.Put_Line ("     where: <Format> = 'Text' (text files),");
 	    Ada.Text_IO.Put_Line ("                       'HTML' (HTML files),");
 	    Ada.Text_IO.Put_Line ("                       'RTF' (RTF files for Word 97 or later),");
-	    Ada.Text_IO.Put_Line ("                       'Corr' (Corrigendum-style command files for comparisons);");
+	    Ada.Text_IO.Put_Line ("                       'Corr' (Corrigendum-style command files for comparisons),");
+	    Ada.Text_IO.Put_Line ("                       'Tracer',");
+	    Ada.Text_IO.Put_Line ("                       'Ada_Lang_IO' (Markdown/JSX);");
 	    Ada.Text_IO.Put_Line ("     where: <Changes> = 'No-Changes' (Original RM text),");
 	    Ada.Text_IO.Put_Line ("                        'New-Only' (Revised RM text only up to <ChgVers>),");
 	    Ada.Text_IO.Put_Line ("                        'Show-Changes' (Text with changes marked between");

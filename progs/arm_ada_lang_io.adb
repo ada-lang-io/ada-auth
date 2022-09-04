@@ -167,6 +167,23 @@ package body ARM_Ada_Lang_IO is
       --  Put_Line ("    " & Property);
    end Prop;
 
+   procedure Make_New_Sidebar (Self : in out Ada_Lang_IO_Output_Type) is
+   begin
+      Detail.Put_Line (Self, "---");
+      Detail.Put_Line (Self, "sidebar_position: " & Self.Next_Sidebar_Position'Image);
+      Detail.Put_Line (Self, "---");
+      Self.Next_Sidebar_Position := Self.Next_Sidebar_Position + 1;
+   end Make_New_Sidebar;
+
+   procedure Print_Manual_Warning (Self : in out Ada_Lang_IO_Output_Type) is
+   begin
+      Detail.Put_Line (Self, ":::warning");
+      Detail.Put_Line (Self, "We're still working on the Reference manual output.  Internal links are broken,");
+      Detail.Put_Line (Self, "as are a bunch of other things.");
+      Detail.Put_Line (Self, "See the [tracking issue](https://github.com/ada-lang-io/ada-lang-io/issues/20)");
+      Detail.Put_Line (Self, ":::");
+   end Print_Manual_Warning;
+
    -- Create an Self for a document.
    -- The prefix of the output file names is File_Prefix - this
    -- should be no more then 5 characters allowed in file names.
@@ -184,10 +201,9 @@ package body ARM_Ada_Lang_IO is
 
       Ada.Text_IO.Create (Self.Current_File, Ada.Text_IO.Out_File, "Title.md");
 
-      Detail.Put_Line (Self, "---");
-      Detail.Put_Line (Self, "sidebar_position: " & Self.Next_Sidebar_Position'Image);
-      Detail.Put_Line (Self, "---");
-      Self.Next_Sidebar_Position := Self.Next_Sidebar_Position + 1;
+      Make_New_Sidebar (Self);
+
+      Print_Manual_Warning (Self);
 
       Func (Self, "Create");
       Prop ("File Prefix: " & File_Prefix);
@@ -351,7 +367,10 @@ package body ARM_Ada_Lang_IO is
       --  Prop ("Top Level Subdivision Name: " & Top_Level_Subdivision_Name'Image);
 
       case Level is
-         when ARM_Contents.Section =>
+         when ARM_Contents.Section
+         | ARM_Contents.Plain_Annex
+         | ARM_Contents.Informative_Annex
+         | ARM_Contents.Normative_Annex =>
             -- Close previous file (if exists)
             if Ada.Text_IO.Is_Open (Self.Current_File) then
                Ada.Text_IO.Close (Self.Current_File);
@@ -359,14 +378,15 @@ package body ARM_Ada_Lang_IO is
 
             -- Open new file
             Ada.Text_IO.Create (Self.Current_File, Ada.Text_IO.Out_File, Ada.Strings.Unbounded.To_String (Self.Output_Path) & "/" & File_Name);
-            Detail.Put_Line (Self, "---");
-            Detail.Put_Line (Self, "sidebar_position: " & Self.Next_Sidebar_Position'Image);
-            Detail.Put_Line (Self, "---");
-            Self.Next_Sidebar_Position := Self.Next_Sidebar_Position + 1;
+
+            Make_New_Sidebar (Self);
             
             Detail.New_Line (Self);
             Detail.Put_Line (Self, "# " & Clause_Number & " " & Header_Text);
             Detail.New_Line (Self);
+
+            Print_Manual_Warning (Self);
+
          when ARM_Contents.Clause =>
             Detail.New_Line (Self);
             Detail.Put_Line (Self, "## " & Clause_Number & "  " & Header_Text);

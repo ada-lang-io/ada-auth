@@ -418,6 +418,9 @@ package body ARM_Ada_Lang_IO is
             Detail.New_Line (Self);
             Detail.Put_Line (Self, "# " & Clause_Number & "  " & Header_Text);
             Detail.New_Line (Self);
+
+            Print_Manual_Warning (Self);
+
          when ARM_Contents.Subclause =>
             Detail.New_Line (Self);
             Detail.Put_Line (Self, "## " & Clause_Number & "  " & Header_Text);

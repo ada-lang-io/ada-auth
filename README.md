@@ -11,6 +11,13 @@ It contains
 
 See details about Ada formatting tool in [command.txt](progs/command.txt)
 
+## Purpose
+
+This fork adds two additional formatters to the [original project:](https://github.com/reznikmm/ada-auth)
+
+1. Tracer - For understanding what is being emitted by the formatter program.
+2. Ada_Lang_IO - For emitting the .md(x) files needed to put the ARM on https://ada-lang.io/
+
 ## Building
 
 This is an Alire crate that you can build with:

@@ -11,6 +11,8 @@ use Ada.Text_IO;
 package body ARM_Ada_Lang_IO is
 
    package Detail is
+      procedure Append (Self : in out Ada_Lang_IO_Output_Type; Char : Character);
+      procedure Append (Self : in out Ada_Lang_IO_Output_Type; S : String);
       procedure Start_File (Self : in out Ada_Lang_IO_Output_Type; File_Name : String);
       procedure Put_Line (Self : in out Ada_Lang_IO_Output_Type; S : String);
       procedure New_Line (Self : in out Ada_Lang_IO_Output_Type; Count : Ada.Text_IO.Positive_Count := 1);
@@ -79,6 +81,16 @@ package body ARM_Ada_Lang_IO is
    end Paragraph_To_String;
 
    package body Detail is
+      procedure Append (Self : in out Ada_Lang_IO_Output_Type; Char : Character) is
+      begin
+         Ada.Strings.Unbounded.Append (Self.Buffer, Char);
+      end Append;
+
+      procedure Append (Self : in out Ada_Lang_IO_Output_Type; S : String) is
+      begin
+         Ada.Strings.Unbounded.Append (Self.Buffer, S);
+      end Append;
+
       procedure Start_File (Self : in out Ada_Lang_IO_Output_Type; File_Name : String) is
       begin   
             -- Close previous file (if exists)
@@ -352,7 +364,7 @@ package body ARM_Ada_Lang_IO is
    procedure End_Paragraph (Self : in out Ada_Lang_IO_Output_Type) is
    begin
       --  Func (Self, "End_Paragraph");
-      Ada.Strings.Unbounded.Append (Self.Buffer, Ada.Characters.Latin_1.LF);
+      Detail.Append (Self, Ada.Characters.Latin_1.LF);
       Detail.Flush (Self);
       Detail.Trace (Self, "End_Paragraph");
    end End_Paragraph;
@@ -520,7 +532,7 @@ package body ARM_Ada_Lang_IO is
       --  Func (Self, "Ordinary_Text");
       --  Prop ("Text: " & Text);
       --  Detail.Put_Line (Self, Text);
-      Ada.Strings.Unbounded.Append (Self.Buffer, Text);
+      Detail.Append (Self, Text);
    end Ordinary_Text;
 
    function Safe_Char (Char : Character) return String is
@@ -538,7 +550,7 @@ package body ARM_Ada_Lang_IO is
    begin
       --  Func (Self, "Ordinary_Character");
       --  Prop ("Char: " & Char'Image);
-      Ada.Strings.Unbounded.Append (Self.Buffer, Safe_Char (Char));
+      Detail.Append (Self, Safe_Char (Char));
    end Ordinary_Character;
 
    procedure Hard_Space (Self : in out Ada_Lang_IO_Output_Type) is
@@ -704,7 +716,7 @@ package body ARM_Ada_Lang_IO is
       --  Self.Buffer := Ada.Strings.Unbounded.Null_Unbounded_String;
 
       -- todo: make a link instead
-      Ada.Strings.Unbounded.Append (Self.Buffer, Text);
+      Detail.Append (Self, Text);
    end Clause_Reference;
 
    -- Generate a index target. This marks the location where an index
@@ -739,7 +751,7 @@ package body ARM_Ada_Lang_IO is
       --  Prop ("Text: " & Text);
       --  Prop ("Index_Key: " & Index_Key'Image);
 
-      Ada.Strings.Unbounded.Append (Self.Buffer, Text);
+      Detail.Append (Self, Text);
    end Index_Reference;
 
    -- Generate a reference to an DR from the standard. The text
@@ -757,7 +769,7 @@ package body ARM_Ada_Lang_IO is
       --  Func (Self, "DR_Reference");
       --  Prop ("DR Number: " & DR_Number);
 
-      Ada.Strings.Unbounded.Append (Self.Buffer, Text);
+      Detail.Append (Self, Text);
    end DR_Reference;
 
    -- Generate a reference to an AI from the standard. The text
@@ -772,7 +784,7 @@ package body ARM_Ada_Lang_IO is
       --  Func (Self, "AI_Reference");
       --  Prop ("Text: " & Text);
       --  Prop ("AI_Number: " & AI_Number);
-      Ada.Strings.Unbounded.Append (Self.Buffer, Text);
+      Detail.Append (Self, Text);
    end AI_Reference;
 
    -- Generate a local target. This marks the potential target of local
@@ -789,7 +801,7 @@ package body ARM_Ada_Lang_IO is
       --  Prop ("Text: " & Text);
       --  Prop ("Target: " & Target);
 
-      Ada.Strings.Unbounded.Append (Self.Buffer, 
+      Detail.Append (Self, 
          "<a id=""" & Target & """>"
          & Text
          & "</a>");
@@ -811,7 +823,7 @@ package body ARM_Ada_Lang_IO is
       --  Prop ("Target: " & Target);
       --  Prop ("Clause Number: " & Clause_Number);
 
-      Ada.Strings.Unbounded.Append (Self.Buffer, "[" & Text & "]" & "(" & Make_Clause_File_Name (Clause_Number) & "#" & Target & ")");
+      Detail.Append (Self, "[" & Text & "]" & "(" & Make_Clause_File_Name (Clause_Number) & "#" & Target & ")");
    end Local_Link;
 
    -- Generate a local link to the target and clause given.
@@ -833,7 +845,7 @@ package body ARM_Ada_Lang_IO is
       pragma Unreferenced (Clause_Number);
 
       -- todo: start link
-      Ada.Strings.Unbounded.Append (Self.Buffer, "[");
+      Detail.Append (Self, "[");
    end Local_Link_Start;
 
    -- End a local link for the target and clause given.
@@ -850,7 +862,7 @@ package body ARM_Ada_Lang_IO is
       --  Prop ("Target: " & Target);
       --  Prop ("Clause Number: " & Clause_Number);
 
-      Ada.Strings.Unbounded.Append (Self.Buffer, "](" & Make_Clause_File_Name (Clause_Number) & "#" & Target & ")");
+      Detail.Append (Self, "](" & Make_Clause_File_Name (Clause_Number) & "#" & Target & ")");
    end Local_Link_End;
 
    -- Generate a link to the URL given.
@@ -867,7 +879,7 @@ package body ARM_Ada_Lang_IO is
       Prop ("Text: " & Text);
       Prop ("URL: " & URL);
 
-      Ada.Strings.Unbounded.Append (Self.Buffer, "[" & Text & "](" & URL & ")");
+      Detail.Append (Self, "[" & Text & "](" & URL & ")");
    end URL_Link;
 
    -- Generate a picture.

@@ -383,6 +383,9 @@ private
       Current_File : Ada.Text_IO.File_Type;
       Output_Path : Ada.Strings.Unbounded.Unbounded_String;
 
+      -- The current file step being worked on.
+      Current_File_Stem : Ada.Strings.Unbounded.Unbounded_String;
+
       -- The next index in the sidebar of the menu to be used.
       Next_Sidebar_Position : Integer := 0;
 

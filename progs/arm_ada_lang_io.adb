@@ -3,6 +3,7 @@ with ARM_Contents;
 with Ada.Text_IO;
 with Ada.Exceptions;
 with Ada.Strings.Fixed;
+with Ada.Strings.Maps;
 with Ada.Strings.Unbounded;
 with Ada.Characters.Latin_1;
 use Ada.Text_IO;
@@ -10,11 +11,47 @@ use Ada.Text_IO;
 package body ARM_Ada_Lang_IO is
 
    package Detail is
+      procedure Start_File (Self : in out Ada_Lang_IO_Output_Type; File_Name : String);
       procedure Put_Line (Self : in out Ada_Lang_IO_Output_Type; S : String);
       procedure New_Line (Self : in out Ada_Lang_IO_Output_Type; Count : Ada.Text_IO.Positive_Count := 1);
       procedure Flush (Self : in out Ada_Lang_IO_Output_Type);
       procedure Trace (Self : in out Ada_Lang_IO_Output_Type; S : String);
    end Detail;
+
+   procedure Make_New_Sidebar (Self : in out Ada_Lang_IO_Output_Type) is
+   begin
+      Detail.Put_Line (Self, "---");
+      Detail.Put_Line (Self, "sidebar_position: " & Self.Next_Sidebar_Position'Image);
+      Detail.Put_Line (Self, "---");
+      Self.Next_Sidebar_Position := Self.Next_Sidebar_Position + 1;
+   end Make_New_Sidebar;
+
+   procedure Print_Manual_Warning (Self : in out Ada_Lang_IO_Output_Type) is
+   begin
+      Detail.Put_Line (Self, ":::warning");
+      Detail.Put_Line (Self, "We're still working on the Reference manual output.  Internal links are broken,");
+      Detail.Put_Line (Self, "as are a bunch of other things.");
+      Detail.Put_Line (Self, "See the [tracking issue](https://github.com/ada-lang-io/ada-lang-io/issues/20)");
+      Detail.Put_Line (Self, ":::");
+   end Print_Manual_Warning;
+
+   function Make_Clause_File_Name (Clause_Number : String) return String is
+      Dot_Set : constant Ada.Strings.Maps.Character_Set := Ada.Strings.Maps.To_Set ('.');
+      Dot_Index : constant Natural := Ada.Strings.Fixed.Index (Clause_Number, Dot_Set);
+   begin
+      if Dot_Index /= 0 then
+         declare
+            Sub_Dot_Index : constant Natural := Ada.Strings.Fixed.Index (Clause_Number, Dot_Set, From => Dot_Index + 1);
+         begin
+            return (if Sub_Dot_Index /= 0
+               then "./AA-" & Clause_Number (Clause_Number'First .. Sub_Dot_Index - 1)
+               else "./AA-" & Clause_Number
+            );
+         end;
+      else
+         return "./AA-" & Clause_Number;
+      end if;
+   end Make_Clause_File_Name;
 
    function Format_To_String (Format : ARM_Output.Format_Type) return String is
    begin
@@ -42,6 +79,19 @@ package body ARM_Ada_Lang_IO is
    end Paragraph_To_String;
 
    package body Detail is
+      procedure Start_File (Self : in out Ada_Lang_IO_Output_Type; File_Name : String) is
+      begin   
+            -- Close previous file (if exists)
+            if Ada.Text_IO.Is_Open (Self.Current_File) then
+               Ada.Text_IO.Close (Self.Current_File);
+            end if;
+
+            -- Open new file
+            Ada.Text_IO.Create (Self.Current_File, Ada.Text_IO.Out_File, Ada.Strings.Unbounded.To_String (Self.Output_Path) & "/" & File_Name);
+
+            Make_New_Sidebar (Self);
+      end Start_File;
+
       procedure Put (Self : in out Ada_Lang_IO_Output_Type; Char : Character) is
       begin
          Put (Self.Current_File, Char);
@@ -166,23 +216,6 @@ package body ARM_Ada_Lang_IO is
       pragma Unreferenced (Indent_String);
       --  Put_Line ("    " & Property);
    end Prop;
-
-   procedure Make_New_Sidebar (Self : in out Ada_Lang_IO_Output_Type) is
-   begin
-      Detail.Put_Line (Self, "---");
-      Detail.Put_Line (Self, "sidebar_position: " & Self.Next_Sidebar_Position'Image);
-      Detail.Put_Line (Self, "---");
-      Self.Next_Sidebar_Position := Self.Next_Sidebar_Position + 1;
-   end Make_New_Sidebar;
-
-   procedure Print_Manual_Warning (Self : in out Ada_Lang_IO_Output_Type) is
-   begin
-      Detail.Put_Line (Self, ":::warning");
-      Detail.Put_Line (Self, "We're still working on the Reference manual output.  Internal links are broken,");
-      Detail.Put_Line (Self, "as are a bunch of other things.");
-      Detail.Put_Line (Self, "See the [tracking issue](https://github.com/ada-lang-io/ada-lang-io/issues/20)");
-      Detail.Put_Line (Self, ":::");
-   end Print_Manual_Warning;
 
    -- Create an Self for a document.
    -- The prefix of the output file names is File_Prefix - this
@@ -371,15 +404,7 @@ package body ARM_Ada_Lang_IO is
          | ARM_Contents.Plain_Annex
          | ARM_Contents.Informative_Annex
          | ARM_Contents.Normative_Annex =>
-            -- Close previous file (if exists)
-            if Ada.Text_IO.Is_Open (Self.Current_File) then
-               Ada.Text_IO.Close (Self.Current_File);
-            end if;
-
-            -- Open new file
-            Ada.Text_IO.Create (Self.Current_File, Ada.Text_IO.Out_File, Ada.Strings.Unbounded.To_String (Self.Output_Path) & "/" & File_Name);
-
-            Make_New_Sidebar (Self);
+            Detail.Start_File (Self, File_Name);
             
             Detail.New_Line (Self);
             Detail.Put_Line (Self, "# " & Clause_Number & " " & Header_Text);
@@ -388,16 +413,18 @@ package body ARM_Ada_Lang_IO is
             Print_Manual_Warning (Self);
 
          when ARM_Contents.Clause =>
+            Detail.Start_File (Self, "AA-" & Clause_Number & ".md");
+
             Detail.New_Line (Self);
-            Detail.Put_Line (Self, "## " & Clause_Number & "  " & Header_Text);
+            Detail.Put_Line (Self, "# " & Clause_Number & "  " & Header_Text);
             Detail.New_Line (Self);
          when ARM_Contents.Subclause =>
             Detail.New_Line (Self);
-            Detail.Put_Line (Self, "### " & Clause_Number & "  " & Header_Text);
+            Detail.Put_Line (Self, "## " & Clause_Number & "  " & Header_Text);
             Detail.New_Line (Self);
          when ARM_Contents.Subsubclause =>
             Detail.New_Line (Self);
-            Detail.Put_Line (Self, "#### " & Clause_Number & "  " & Header_Text);
+            Detail.Put_Line (Self, "### " & Clause_Number & "  " & Header_Text);
             Detail.New_Line (Self);
          when others =>
             null;
@@ -759,10 +786,10 @@ package body ARM_Ada_Lang_IO is
       --  Prop ("Text: " & Text);
       --  Prop ("Target: " & Target);
 
-      Ada.Strings.Unbounded.Append (Self.Buffer, Text);
-         --  "<a href=""#" & Target & """"
-         --  & Text
-         --  & "</a>");
+      Ada.Strings.Unbounded.Append (Self.Buffer, 
+         "<a id=""" & Target & """>"
+         & Text
+         & "</a>");
    end Local_Target;
 
    -- Generate a local link to the target and clause given.
@@ -781,7 +808,7 @@ package body ARM_Ada_Lang_IO is
       --  Prop ("Target: " & Target);
       --  Prop ("Clause Number: " & Clause_Number);
 
-      Ada.Strings.Unbounded.Append (Self.Buffer, "[" & Text & "]" & "(" & Target & ")");
+      Ada.Strings.Unbounded.Append (Self.Buffer, "[" & Text & "]" & "(" & Make_Clause_File_Name (Clause_Number) & "#" & Target & ")");
    end Local_Link;
 
    -- Generate a local link to the target and clause given.
@@ -792,7 +819,7 @@ package body ARM_Ada_Lang_IO is
    procedure Local_Link_Start
      (Self : in out Ada_Lang_IO_Output_Type;
       Target : in String;
-      Clause_Number : in     String)
+      Clause_Number : in String)
    is
    begin
       --  Func (Self, "Local_Link_Start");
@@ -820,7 +847,7 @@ package body ARM_Ada_Lang_IO is
       --  Prop ("Target: " & Target);
       --  Prop ("Clause Number: " & Clause_Number);
 
-      Ada.Strings.Unbounded.Append (Self.Buffer, "](" & Target & ")");
+      Ada.Strings.Unbounded.Append (Self.Buffer, "](" & Make_Clause_File_Name (Clause_Number) & "#" & Target & ")");
    end Local_Link_End;
 
    -- Generate a link to the URL given.

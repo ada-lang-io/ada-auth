@@ -369,7 +369,7 @@ package body ARM_Tracer is
    -- Output an special character.
    procedure Special_Character
      (Self : in out Tracer_Output_Type;
-      Char          : in     ARM_Output.Special_Character_Type)
+      Char : in ARM_Output.Special_Character_Type)
    is
    begin
       Func (Self, "Special_Character");
@@ -397,6 +397,7 @@ package body ARM_Tracer is
    begin
       Func (Self, "End_Hang_Item");
       Trace ("End_Hang_Item");
+      Ada.Strings.Unbounded.Append (Self.Buffer, "@");
    end End_Hang_Item;
 
    -- Change the text format so that all of the properties are as specified.

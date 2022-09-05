@@ -716,13 +716,18 @@ package body ARM_Ada_Lang_IO is
    -- of the reference is "Text", and DR_Number denotes
    -- the target. For hyperlinked formats, this should generate
    -- a link; for other formats, the text alone is generated.
+   --
+   -- These are numbers like 8652/0033
    procedure DR_Reference
-     (Self : in out Ada_Lang_IO_Output_Type; Text : in String;
-      DR_Number     : in     String)
+     (Self : in out Ada_Lang_IO_Output_Type;
+      Text : in String;
+      DR_Number : in String)
    is
    begin
-      Func (Self, "DR_Reference");
-      Prop ("DR Number: " & DR_Number);
+      --  Func (Self, "DR_Reference");
+      --  Prop ("DR Number: " & DR_Number);
+
+      Ada.Strings.Unbounded.Append (Self.Buffer, Text);
    end DR_Reference;
 
    -- Generate a reference to an AI from the standard. The text
@@ -732,11 +737,12 @@ package body ARM_Ada_Lang_IO is
    procedure AI_Reference
      (Self : in out Ada_Lang_IO_Output_Type;
       Text : in String;
-      AI_Number     : in     String)
+      AI_Number : in String)
    is begin
-      Func (Self, "AI_Reference");
-      Prop ("Text: " & Text);
-      Prop ("AI_Number: " & AI_Number);
+      --  Func (Self, "AI_Reference");
+      --  Prop ("Text: " & Text);
+      --  Prop ("AI_Number: " & AI_Number);
+      Ada.Strings.Unbounded.Append (Self.Buffer, Text);
    end AI_Reference;
 
    -- Generate a local target. This marks the potential target of local

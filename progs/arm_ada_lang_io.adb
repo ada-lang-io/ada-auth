@@ -9,6 +9,10 @@ with Ada.Characters.Latin_1;
 use Ada.Text_IO;
 
 package body ARM_Ada_Lang_IO is
+   --  Identifies code blocks requiring a <CodeBlock> tag.
+   subtype Code_Block_Style is ARM_Output.Paragraph_Style_Type range ARM_Output.Examples .. ARM_Output.Small_Swiss_Examples;
+
+   function JSX_Wrap (S : String) return String is ( "{""" & S & """}");
 
    package Detail is
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; Char : Character);
@@ -36,6 +40,13 @@ package body ARM_Ada_Lang_IO is
       Detail.Put_Line (Self, "See the [tracking issue](https://github.com/ada-lang-io/ada-lang-io/issues/20)");
       Detail.Put_Line (Self, ":::");
    end Print_Manual_Warning;
+
+   procedure Include_React_Elements (Self : in out Ada_Lang_IO_Output_Type) is
+   begin
+      Detail.New_Line (Self);
+      Detail.Put_Line (Self, "import CodeBlock from ""@theme/CodeBlock"";");
+      Detail.New_Line (Self);
+   end Include_React_Elements;
 
    function Make_Clause_File_Name (Clause_Number : String) return String is
       Dot_Set : constant Ada.Strings.Maps.Character_Set := Ada.Strings.Maps.To_Set ('.');
@@ -79,6 +90,12 @@ package body ARM_Ada_Lang_IO is
          & " " & Paragraph.Justification'Image
       );
    end Paragraph_To_String;
+
+   function Make_Link (Name : String; Target : String; In_Code_Block : Boolean) return String is
+   begin
+      return (if In_Code_Block then "<a href=""" & Target & """" & ">" & Name & "</a>"
+         else "[" & Name & "](" & Target & ")");
+   end Make_Link;
 
    package body Detail is
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; Char : Character) is
@@ -157,10 +174,8 @@ package body ARM_Ada_Lang_IO is
                   => Ada.Strings.Unbounded.Element (Self.Buffer, X) = ' ')
          then
             case Self.Current_Paragraph.Style is
-               when ARM_Output.Examples
-               | ARM_Output.Small_Examples
-               | ARM_Output.Swiss_Examples =>
-                  Detail.Put_Line (Self, "```ada");
+               when Code_Block_Style =>
+                  Detail.Put_Line (Self, "<CodeBlock>");
                when ARM_Output.Small
                | ARM_Output.Small_Wide_Above => null;
                   --  Detail.Put_Line (Self, ":::note");
@@ -174,11 +189,9 @@ package body ARM_Ada_Lang_IO is
             Format_End (Self, Self.Current_Format);
 
             case Self.Current_Paragraph.Style is
-               when ARM_Output.Examples
-               | ARM_Output.Small_Examples
-               | ARM_Output.Swiss_Examples =>
+               when Code_Block_Style =>
                   Detail.New_Line (Self);
-                  Detail.Put_Line (Self, "```");
+                  Detail.Put_Line (Self, "</CodeBlock>");
                when ARM_Output.Small
                | ARM_Output.Small_Wide_Above => null;
                   --  Detail.New_Line (Self);
@@ -244,7 +257,7 @@ package body ARM_Ada_Lang_IO is
    begin
       Self.Output_Path := Ada.Strings.Unbounded.To_Unbounded_String (Output_Path);
 
-      Ada.Text_IO.Create (Self.Current_File, Ada.Text_IO.Out_File, "Title.md");
+      Ada.Text_IO.Create (Self.Current_File, Ada.Text_IO.Out_File, "Title.mdx");
 
       Make_New_Sidebar (Self);
 
@@ -359,6 +372,8 @@ package body ARM_Ada_Lang_IO is
       --  Prop ("Justification: " & Justification'Image);
 
       Self.Current_Paragraph := New_Paragraph;
+
+      Self.In_Code_Block := Style in Code_Block_Style;
    end Start_Paragraph;
 
    procedure End_Paragraph (Self : in out Ada_Lang_IO_Output_Type) is
@@ -367,6 +382,8 @@ package body ARM_Ada_Lang_IO is
       Detail.Append (Self, Ada.Characters.Latin_1.LF);
       Detail.Flush (Self);
       Detail.Trace (Self, "End_Paragraph");
+
+      Self.In_Code_Block := False;
    end End_Paragraph;
 
    -- Output a Category header (that is, "Legality Rules",
@@ -403,7 +420,7 @@ package body ARM_Ada_Lang_IO is
    is
       File_Name : String := "AA-" & (if Clause_Number = "" and then
 		(Header_Text = "Table of Contents" or else -- Ada 95 format
-		 Header_Text = "Contents") then "TOC" else Clause_Number) & ".md";
+		 Header_Text = "Contents") then "TOC" else Clause_Number) & ".mdx";
    begin
       --  Func (Self, "Clause_Header");
       --  Prop ("Header Text:   " & Header_Text);
@@ -423,15 +440,17 @@ package body ARM_Ada_Lang_IO is
             Detail.New_Line (Self);
 
             Print_Manual_Warning (Self);
+            Include_React_Elements (Self);
 
          when ARM_Contents.Clause =>
-            Detail.Start_File (Self, "AA-" & Clause_Number & ".md");
+            Detail.Start_File (Self, "AA-" & Clause_Number & ".mdx");
 
             Detail.New_Line (Self);
             Detail.Put_Line (Self, "# " & Clause_Number & "  " & Header_Text);
             Detail.New_Line (Self);
 
             Print_Manual_Warning (Self);
+            Include_React_Elements (Self);
 
          when ARM_Contents.Subclause =>
             Detail.New_Line (Self);
@@ -535,11 +554,14 @@ package body ARM_Ada_Lang_IO is
       Detail.Append (Self, Text);
    end Ordinary_Text;
 
-   function Safe_Char (Char : Character) return String is
+   function Safe_Char (In_Code_Block : Boolean; Char : Character) return String is
    begin
       case Char is
-         when '<' => return "&lt";
-         when '>' => return "&gt";
+         when '<' => return "&lt;";
+         when '>' => return "&gt;";
+         when '{' => return (if In_Code_Block then JSX_Wrap ("{") else "{");
+         when '}' => return (if In_Code_Block then JSX_Wrap ("}") else "}");
+         when Ada.Characters.Latin_1.LF => return (if In_Code_Block then JSX_Wrap ("\n") else (1 => Ada.Characters.Latin_1.LF));
          when others => return (1 => Char);
       end case;
    end Safe_Char;
@@ -550,7 +572,7 @@ package body ARM_Ada_Lang_IO is
    begin
       --  Func (Self, "Ordinary_Character");
       --  Prop ("Char: " & Char'Image);
-      Detail.Append (Self, Safe_Char (Char));
+      Detail.Append (Self, Safe_Char (Self.In_Code_Block, Char));
    end Ordinary_Character;
 
    procedure Hard_Space (Self : in out Ada_Lang_IO_Output_Type) is
@@ -784,7 +806,7 @@ package body ARM_Ada_Lang_IO is
       --  Func (Self, "AI_Reference");
       --  Prop ("Text: " & Text);
       --  Prop ("AI_Number: " & AI_Number);
-      Detail.Append (Self, Text);
+      Detail.Append (Self, (if Self.In_Code_Block then JSX_Wrap (Text) else Text));
    end AI_Reference;
 
    -- Generate a local target. This marks the potential target of local
@@ -823,7 +845,7 @@ package body ARM_Ada_Lang_IO is
       --  Prop ("Target: " & Target);
       --  Prop ("Clause Number: " & Clause_Number);
 
-      Detail.Append (Self, "[" & Text & "]" & "(" & Make_Clause_File_Name (Clause_Number) & "#" & Target & ")");
+      Detail.Append (Self, Make_Link (Text, Make_Clause_File_Name (Clause_Number) & "#" & Target, Self.In_Code_Block));
    end Local_Link;
 
    -- Generate a local link to the target and clause given.
@@ -841,11 +863,12 @@ package body ARM_Ada_Lang_IO is
       --  Prop ("Target: " & Target);
       --  Prop ("Clause Number: " & Clause_Number);
 
-      pragma Unreferenced (Target);
-      pragma Unreferenced (Clause_Number);
-
       -- todo: start link
-      Detail.Append (Self, "[");
+      if Self.In_Code_Block then
+         Detail.Append (Self, "<a href=""" & Make_Clause_File_Name (Clause_Number) & "#" & Target & """>");
+      else
+         Detail.Append (Self, "[");
+      end if;
    end Local_Link_Start;
 
    -- End a local link for the target and clause given.
@@ -879,7 +902,7 @@ package body ARM_Ada_Lang_IO is
       Prop ("Text: " & Text);
       Prop ("URL: " & URL);
 
-      Detail.Append (Self, "[" & Text & "](" & URL & ")");
+      Detail.Append (Self, Make_Link (Text, URL, Self.In_Code_Block));
    end URL_Link;
 
    -- Generate a picture.

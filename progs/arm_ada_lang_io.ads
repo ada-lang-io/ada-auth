@@ -398,6 +398,10 @@ private
       Current_Paragraph : Paragraph_Styling;
       Verbose : Boolean := True;
 
+      -- Need to emit JSX style HTML tags when in a code block.
+      -- Also additional characters might need to be escaped, like { and }
+      In_Code_Block : Boolean := False;
+
       -- Stats recording.
       Call_Count : String_Int_Maps.Map;
       Transitions : String_Set_Maps.Map;

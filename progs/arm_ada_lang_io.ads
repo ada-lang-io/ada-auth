@@ -4,7 +4,11 @@ with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Ordered_Sets;
 with Ada.Strings.Unbounded;
 
--- Help understand what the ARM is producing by writing a full trace of all of the things being called.
+-- A formatter for outputting MDX (Markdown + JSX) files used for adding to
+-- the ada-lang.io website.
+--
+-- This opens up syntax past that of Markdown, especially to include <CodeBlock>
+-- for syntax formatting.
 package ARM_Ada_Lang_IO is
 
    type Ada_Lang_IO_Output_Type is new ARM_Output.Output_Type with private;
@@ -268,7 +272,7 @@ package ARM_Ada_Lang_IO is
    procedure DR_Reference
      (Self : in out Ada_Lang_IO_Output_Type; Text : in String;
       DR_Number     : in     String);
-   -- Generate a reference to an DR from the standard. The text
+   -- Generate a reference to an DR (Defect Report) from the standard. The text
    -- of the reference is "Text", and DR_Number denotes
    -- the target. For hyperlinked formats, this should generate
    -- a link; for other formats, the text alone is generated.

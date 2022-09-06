@@ -901,11 +901,7 @@ package body ARM_Ada_Lang_IO is
       --  Prop ("Clause Number: " & Clause_Number);
 
       -- todo: start link
-      if Self.In_Code_Block then
-         Detail.Append (Self, "<a href=""" & Make_Clause_File_Name (Clause_Number) & "#" & Target & """>");
-      else
-         Detail.Append (Self, "[");
-      end if;
+      Detail.Append (Self, "<a href=""" & Make_Clause_File_Name (Clause_Number) & "#" & Target & """>");
    end Local_Link_Start;
 
    -- End a local link for the target and clause given.
@@ -921,8 +917,7 @@ package body ARM_Ada_Lang_IO is
       --  Func (Self, "Local_Link_End");
       --  Prop ("Target: " & Target);
       --  Prop ("Clause Number: " & Clause_Number);
-
-      Detail.Append (Self, "](" & Make_Clause_File_Name (Clause_Number) & "#" & Target & ")");
+      Detail.Append (Self, "</a>");
    end Local_Link_End;
 
    -- Generate a link to the URL given.

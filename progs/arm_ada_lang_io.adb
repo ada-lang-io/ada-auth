@@ -29,7 +29,7 @@ package body ARM_Ada_Lang_IO is
    package Detail is
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; Char : Character);
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; S : String);
-      procedure Start_File (Self : in out Ada_Lang_IO_Output_Type; File_Name : String);
+      procedure Start_File (Self : in out Ada_Lang_IO_Output_Type; File_Name : String; Clause_Number : String; Header_Text : String);
       procedure Put_Line (Self : in out Ada_Lang_IO_Output_Type; S : String);
       procedure New_Line (Self : in out Ada_Lang_IO_Output_Type; Count : Ada.Text_IO.Positive_Count := 1);
       procedure Flush (Self : in out Ada_Lang_IO_Output_Type);
@@ -60,21 +60,38 @@ package body ARM_Ada_Lang_IO is
       Detail.New_Line (Self);
    end Include_React_Elements;
 
-   function Make_Clause_File_Name (Clause_Number : String) return String is
+   function Is_Top_Level_Clause (Clause_Number : String) return Boolean is
+      Dot_Set : constant Ada.Strings.Maps.Character_Set := Ada.Strings.Maps.To_Set ('.');
+   begin
+      return Ada.Strings.Fixed.Index (Clause_Number, Dot_Set) = 0;
+   end Is_Top_Level_Clause;
+
+   function Find_Top_Level_Clause (Clause_Number : String) return String is
       Dot_Set : constant Ada.Strings.Maps.Character_Set := Ada.Strings.Maps.To_Set ('.');
       Dot_Index : constant Natural := Ada.Strings.Fixed.Index (Clause_Number, Dot_Set);
+   begin
+      return Clause_Number (Clause_Number'First .. Dot_Index - 1);
+   end Find_Top_Level_Clause;
+
+   function Make_Clause_File_Name (
+      Self : in out Ada_Lang_IO_Output_Type;
+      Clause_Number : String) return String
+   is
+      Dot_Set : constant Ada.Strings.Maps.Character_Set := Ada.Strings.Maps.To_Set ('.');
+      Dot_Index : constant Natural := Ada.Strings.Fixed.Index (Clause_Number, Dot_Set);
+      Prepend : constant String := "./" & Ada.Strings.Unbounded.To_String (Self.File_Prefix) & "-";
    begin
       if Dot_Index /= 0 then
          declare
             Sub_Dot_Index : constant Natural := Ada.Strings.Fixed.Index (Clause_Number, Dot_Set, From => Dot_Index + 1);
          begin
             return (if Sub_Dot_Index /= 0
-               then "./AA-" & Clause_Number (Clause_Number'First .. Sub_Dot_Index - 1)
-               else "./AA-" & Clause_Number
+               then Prepend & Clause_Number (Clause_Number'First .. Sub_Dot_Index - 1)
+               else Prepend & Clause_Number
             );
          end;
       else
-         return "./AA-" & Clause_Number;
+         return Prepend & Clause_Number;
       end if;
    end Make_Clause_File_Name;
 
@@ -106,8 +123,6 @@ package body ARM_Ada_Lang_IO is
    function Make_Link (Name : String; Target : String; In_Code_Block : Boolean) return String is
    begin
       return "<a href=""" & Target & """" & ">" & Name & "</a>";
-      --  return (if In_Code_Block then "<a href=""" & Target & """" & ">" & Name & "</a>"
-      --     else "[" & Name & "](" & Target & ")");
    end Make_Link;
 
    package body Detail is
@@ -121,17 +136,33 @@ package body ARM_Ada_Lang_IO is
          Ada.Strings.Unbounded.Append (Self.Buffer, S);
       end Append;
 
-      procedure Start_File (Self : in out Ada_Lang_IO_Output_Type; File_Name : String) is
+      procedure Close_File (Self : in out Ada_Lang_IO_Output_Type) is
+      begin
+         -- Close previous file (if exists)
+         if Ada.Text_IO.Is_Open (Self.Current_File) then
+            Ada.Text_IO.Close (Self.Current_File);
+         end if;
+      end Close_File;
+
+      procedure Start_File (
+         Self : in out Ada_Lang_IO_Output_Type;
+         File_Name : String;
+         Clause_Number : String;
+         Header_Text : String) is
       begin   
-            -- Close previous file (if exists)
-            if Ada.Text_IO.Is_Open (Self.Current_File) then
-               Ada.Text_IO.Close (Self.Current_File);
-            end if;
+         Close_File (Self);
 
-            -- Open new file
-            Ada.Text_IO.Create (Self.Current_File, Ada.Text_IO.Out_File, Ada.Strings.Unbounded.To_String (Self.Output_Path) & "/" & File_Name);
+         -- Open new file
+         Ada.Text_IO.Create (Self.Current_File, Ada.Text_IO.Out_File, Ada.Strings.Unbounded.To_String (Self.Output_Path) & "/" & File_Name);
 
-            Make_New_Sidebar (Self);
+         Make_New_Sidebar (Self);
+         
+         Detail.New_Line (Self);
+         Detail.Put_Line (Self, "# " & Clause_Number & " " & Header_Text);
+         Detail.New_Line (Self);
+
+         Print_Manual_Warning (Self);
+         Include_React_Elements (Self);
       end Start_File;
 
       procedure Put (Self : in out Ada_Lang_IO_Output_Type; Char : Character) is
@@ -367,25 +398,9 @@ package body ARM_Ada_Lang_IO is
          | ARM_Contents.Plain_Annex
          | ARM_Contents.Informative_Annex
          | ARM_Contents.Normative_Annex =>
-            Detail.Start_File (Self, File_Name);
-            
-            Detail.New_Line (Self);
-            Detail.Put_Line (Self, "# " & Clause_Number & " " & Header_Text);
-            Detail.New_Line (Self);
-
-            Print_Manual_Warning (Self);
-            Include_React_Elements (Self);
-
+            Detail.Start_File (Self, File_Name, Clause_Number, Header_Text);
          when ARM_Contents.Clause =>
-            Detail.Start_File (Self, "AA-" & Clause_Number & ".mdx");
-
-            Detail.New_Line (Self);
-            Detail.Put_Line (Self, "# " & Clause_Number & "  " & Header_Text);
-            Detail.New_Line (Self);
-
-            Print_Manual_Warning (Self);
-            Include_React_Elements (Self);
-
+            Detail.Start_File (Self, "AA-" & Clause_Number & ".mdx", Clause_Number, Header_Text);
          when ARM_Contents.Subclause =>
             Detail.New_Line (Self);
             Detail.Put_Line (Self, "## " & Clause_Number & "  " & Header_Text);
@@ -806,7 +821,7 @@ package body ARM_Ada_Lang_IO is
       --  Detail.Trace (Self, "Target: " & Target);
       --  Detail.Trace (Self, "Clause Number: " & Clause_Number);
 
-      Detail.Append (Self, Make_Link (Text, Make_Clause_File_Name (Clause_Number) & "#" & Target, Self.In_Code_Block));
+      Detail.Append (Self, Make_Link (Text, Make_Clause_File_Name (Self, Clause_Number) & "#" & Target, Self.In_Code_Block));
    end Local_Link;
 
    -- Generate a local link to the target and clause given.
@@ -825,7 +840,7 @@ package body ARM_Ada_Lang_IO is
       --  Detail.Trace (Self, "Clause Number: " & Clause_Number);
 
       -- todo: start link
-      Detail.Append (Self, "<a href=""" & Make_Clause_File_Name (Clause_Number) & "#" & Target & """>");
+      Detail.Append (Self, "<a href=""" & Make_Clause_File_Name (Self, Clause_Number) & "#" & Target & """>");
    end Local_Link_Start;
 
    -- End a local link for the target and clause given.

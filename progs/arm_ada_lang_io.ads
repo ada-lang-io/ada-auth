@@ -1,8 +1,8 @@
-with ARM_Output, ARM_Contents, Ada.Text_IO;
+with ARM_Contents;
+with ARM_Output;
 
-with Ada.Containers.Ordered_Maps;
-with Ada.Containers.Ordered_Sets;
 with Ada.Strings.Unbounded;
+with Ada.Text_IO;
 
 -- A formatter for outputting MDX (Markdown + JSX) files used for adding to
 -- the ada-lang.io website.
@@ -351,26 +351,6 @@ package ARM_Ada_Lang_IO is
 
 private
 
-   package String_Int_Maps is new Ada.Containers.Ordered_Maps (
-      Key_Type => Ada.Strings.Unbounded.Unbounded_String,
-      Element_Type => Natural,
-      "<" => Ada.Strings.Unbounded."<",
-      "=" => "="
-   );
-
-   package String_Sets is new Ada.Containers.Ordered_Sets (
-      Element_Type => Ada.Strings.Unbounded.Unbounded_String,
-      "<" => Ada.Strings.Unbounded."<",
-      "=" => Ada.Strings.Unbounded."="
-   );
-
-   package String_Set_Maps is new Ada.Containers.Ordered_Maps (
-      Key_Type => Ada.Strings.Unbounded.Unbounded_String,
-      Element_Type => String_Sets.Set,
-      "<" => Ada.Strings.Unbounded."<",
-      "=" => String_Sets."="
-   );
-
    type Paragraph_Styling is record
       Style          : ARM_Output.Paragraph_Style_Type;
       Indent         : ARM_Output.Paragraph_Indent_Type;
@@ -401,11 +381,6 @@ private
       -- Need to emit JSX style HTML tags when in a code block.
       -- Also additional characters might need to be escaped, like { and }
       In_Code_Block : Boolean := False;
-
-      -- Stats recording.
-      Call_Count : String_Int_Maps.Map;
-      Transitions : String_Set_Maps.Map;
-      Last_Func : Ada.Strings.Unbounded.Unbounded_String := Ada.Strings.Unbounded.To_Unbounded_String ("START");
    end record;
 
 end ARM_Ada_Lang_IO;

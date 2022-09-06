@@ -17,11 +17,8 @@ package body ARM_Ada_Lang_IO is
    function Safe_Char (In_Code_Block : Boolean; Char : Character) return String is
    begin
       case Char is
-         when '<' => return JSX_Wrap ("<");  -- "&lt;";
-         when '>' => return JSX_Wrap (">");  -- "&gt;";
-         --  when '{' => return (if In_Code_Block then JSX_Wrap ("{") else "{");
-         --  when '}' => return (if In_Code_Block then JSX_Wrap ("}") else "}");
-         --  when Ada.Characters.Latin_1.LF => return (if In_Code_Block then JSX_Wrap ("\n") else (1 => Ada.Characters.Latin_1.LF));
+         when '<' => return JSX_Wrap ("<");
+         when '>' => return JSX_Wrap (">");
          when '{' => return JSX_Wrap ("{");
          when '}' => return JSX_Wrap ("}");
          when Ada.Characters.Latin_1.LF => return (if In_Code_Block then JSX_Wrap ("\n") else ""); -- (1 => Ada.Characters.Latin_1.LF));
@@ -205,39 +202,6 @@ package body ARM_Ada_Lang_IO is
 
    ----------------------------------------------------------------------------
 
-   procedure Func (Self : in out Ada_Lang_IO_Output_Type; Name : String) is
-      Converted_Name : constant Ada.Strings.Unbounded.Unbounded_String := Ada.Strings.Unbounded.To_Unbounded_String (Name);
-   begin
-      Put_Line ("**" & Name);
-
-      if not Self.Call_Count.Contains (Converted_Name) then
-         Self.Call_Count.Insert (Converted_Name, 0);
-      end if;
-      Self.Call_Count (Converted_Name) := Self.Call_Count (Converted_Name) + 1;
-
-      -- Track the transition from the previous function to this function.
-      if not Self.Transitions.Contains (Self.Last_Func) then
-         Self.Transitions.Insert (Self.Last_Func, String_Sets.Empty_Set);
-      end if;
-      
-      if not Self.Transitions (Self.Last_Func).Contains (Converted_Name) then
-         Self.Transitions (Self.Last_Func).Insert (Converted_Name);
-      end if;
-
-      -- Update the trace of the last function for next time.
-      Self.Last_Func := Converted_Name;
-   end Func;
-
-   procedure Prop (Property : String; Indent : Positive := 1) is
-      Indent_Size : constant := 4;
-      Indent_String : constant String (1 .. Indent * Indent_Size) := (others => ' ');
-   begin
-      pragma Unreferenced (Property);
-      pragma Unreferenced (Indent_Size);
-      pragma Unreferenced (Indent_String);
-      --  Put_Line ("    " & Property);
-   end Prop;
-
    -- Create an Self for a document.
    -- The prefix of the output file names is File_Prefix - this
    -- should be no more then 5 characters allowed in file names.
@@ -251,6 +215,9 @@ package body ARM_Ada_Lang_IO is
      Verbose : Boolean := True)
    is
    begin
+      pragma Unreferenced (File_Prefix);
+      pragma Unreferenced (Title);
+
       Self.Output_Path := Ada.Strings.Unbounded.To_Unbounded_String (Output_Path);
 
       Ada.Text_IO.Create (Self.Current_File, Ada.Text_IO.Out_File, "Title.mdx");
@@ -259,33 +226,14 @@ package body ARM_Ada_Lang_IO is
 
       Print_Manual_Warning (Self);
 
-      Func (Self, "Create");
-      Prop ("File Prefix: " & File_Prefix);
-      Prop ("Output path: " & Output_Path);
       Self.Verbose := Verbose;
    end Create;
 
-   procedure Close (Self : in out Ada_Lang_IO_Output_Type) is
    -- Close an Self. No further output to the object is
    -- allowed after this call.
+   procedure Close (Self : in out Ada_Lang_IO_Output_Type) is
    begin
-      Func (Self, "Close");
-
-      if Self.Verbose then
-         for Cursor in Self.Call_Count.Iterate loop
-            Put_Line (Ada.Strings.Unbounded.To_String (String_Int_Maps.Key (Cursor)) & " : " & Natural'Image (String_Int_Maps.Element (Cursor)));
-         end loop;
-
-         for Cursor in Self.Transitions.Iterate loop
-            declare
-               Source : constant Ada.Strings.Unbounded.Unbounded_String := String_Set_Maps.Key (Cursor);
-            begin
-               for Destination in String_Set_Maps.Element (Cursor).Iterate loop
-                  Put_Line (Ada.Strings.Unbounded.To_String (Source) & " -> " & Ada.Strings.Unbounded.To_String (String_Sets.Element (Destination)) & ";");
-               end loop;
-            end;
-         end loop;
-      end if;
+      null;
    end Close;
 
    -- Start a new section. The title is Section_Title (this is
@@ -297,29 +245,20 @@ package body ARM_Ada_Lang_IO is
       Section_Name  : in String
    ) is
    begin
-      --  Func (Self, "Section");
-      --  Prop ("Section Title: " & Section_Title);
-      --  Prop ("Section Name:" & Section_Name);
-
-      -- TODO: Add anchor
-      pragma Unreferenced (Self);
-      pragma Unreferenced (Section_Title);
-      pragma Unreferenced (Section_Name);
-
+      Detail.Trace (Self, "Section");
+      Detail.Trace (Self, "Section Title: " & Section_Title);
+      Detail.Trace (Self, "Section Name:" & Section_Name);
       null;
    end Section;
 
-   --
    -- Set the number of columns.
-   -- Raises Not_Valid_Error if in a paragraph.
-   --
    procedure Set_Columns (
       Self     : in out Ada_Lang_IO_Output_Type;
       Number_of_Columns : in ARM_Output.Column_Count
    ) is
    begin
-      Func (Self, "Set_Columns");
-      Prop ("Number of columns: " & Number_of_Columns'Image);
+      Detail.Trace (Self, "Set_Columns");
+      Detail.Trace (Self, "Number of columns: " & Number_of_Columns'Image);
    end Set_Columns;
 
    -- Start a new paragraph. The style and indent of the paragraph is as
@@ -359,13 +298,6 @@ package body ARM_Ada_Lang_IO is
       );
    begin
       Detail.Trace (Self, "Start_Paragraph: " & Paragraph_To_String (New_Paragraph));
-      --  Func (Self, "Start_Paragraph");
-      --  Prop ("Style:" & Style'Image);
-      --  Prop ("Indent: " & Indent'Image);
-      --  Prop ("Number: " & Number);
-      --  Prop ("No prefix: " & No_Prefix'Image);
-      --  Prop ("Space after: " & Space_After'Image);
-      --  Prop ("Justification: " & Justification'Image);
 
       Self.Current_Paragraph := New_Paragraph;
 
@@ -378,7 +310,6 @@ package body ARM_Ada_Lang_IO is
 
    procedure End_Paragraph (Self : in out Ada_Lang_IO_Output_Type) is
    begin
-      --  Func (Self, "End_Paragraph");
       if not Self.In_Code_Block then
          Detail.Append (Self, "</p>");
       end if;
@@ -396,11 +327,9 @@ package body ARM_Ada_Lang_IO is
    -- Raises Not_Valid_Error if in a paragraph.
    procedure Category_Header (
       Self : in out Ada_Lang_IO_Output_Type;
-      Header_Text   : String
+      Header_Text : String
    ) is 
    begin
-      --  Func (Self, "Category_Header");
-      --  Prop ("Header Text: " & Header_Text);
       Detail.New_Line (Self);
       Detail.Put_Line (Self, "#### " & Header_Text);
       Detail.New_Line (Self);
@@ -433,12 +362,6 @@ package body ARM_Ada_Lang_IO is
             )
       & ".mdx";
    begin
-      --  Func (Self, "Clause_Header");
-      --  Prop ("Header Text:   " & Header_Text);
-      --  Prop ("Level:         " & Level'Image);
-      --  Prop ("Clause Number: " & Clause_Number);
-      --  Prop ("Top Level Subdivision Name: " & Top_Level_Subdivision_Name'Image);
-
       case Level is
          when ARM_Contents.Section
          | ARM_Contents.Plain_Annex
@@ -486,11 +409,11 @@ package body ARM_Ada_Lang_IO is
         .Top_Level_Subdivision_Name_Kind;
       No_Page_Break : in Boolean := False) is
    begin
-      Func (Self, "Revised_Clause_Header");
-      Prop ("Old header text: " & Old_Header_Text);
-      Prop ("Clause Number: " & Clause_Number);
-      Prop ("Old Version: " & Old_Version'Image);
-      Prop ("Top Level Subdivision Name" & Top_Level_Subdivision_Name'Image);
+      Detail.Trace (Self, "Revised_Clause_Header");
+      Detail.Trace (Self, "Old header text: " & Old_Header_Text);
+      Detail.Trace (Self, "Clause Number: " & Clause_Number);
+      Detail.Trace (Self, "Old Version: " & Old_Version'Image);
+      Detail.Trace (Self, "Top Level Subdivision Name" & Top_Level_Subdivision_Name'Image);
    end Revised_Clause_Header;
 
    -- Mark the start (if For_Start is True) or end (if For_Start is
@@ -502,35 +425,36 @@ package body ARM_Ada_Lang_IO is
       For_Start : in Boolean
    ) is
    begin
-      Func (Self, "TOC_Marker");
-      Prop ("For start: " & For_Start'Image);
+      pragma Unreferenced (Self);
+      pragma Unreferenced (For_Start);
+      null;
    end TOC_Marker;
 
-   procedure New_Column (Self : in out Ada_Lang_IO_Output_Type) is
    -- Output a column break.
    -- Raises Not_Valid_Error if in a paragraph, or if the number of
    -- columns is 1.
+   procedure New_Column (Self : in out Ada_Lang_IO_Output_Type) is
    begin
-      Func (Self, "New_Column");
+      pragma Unreferenced (Self);
    end New_Column;
 
    procedure Start_Table
      (Self      : in out Ada_Lang_IO_Output_Type;
-      Columns            : in     ARM_Output.Column_Count;
-      First_Column_Width : in     ARM_Output.Column_Count;
-      Last_Column_Width  : in     ARM_Output.Column_Count;
-      Alignment          : in     ARM_Output.Column_Text_Alignment;
-      No_Page_Break      : in     Boolean; Has_Border : in Boolean;
-      Small_Text_Size    : in     Boolean;
-      Header_Kind        : in     ARM_Output.Header_Kind_Type)
+      Columns            : in ARM_Output.Column_Count;
+      First_Column_Width : in ARM_Output.Column_Count;
+      Last_Column_Width  : in ARM_Output.Column_Count;
+      Alignment          : in ARM_Output.Column_Text_Alignment;
+      No_Page_Break      : in Boolean; Has_Border : in Boolean;
+      Small_Text_Size    : in Boolean;
+      Header_Kind        : in ARM_Output.Header_Kind_Type)
    is
    begin
-      Func (Self, "Start_Table");
-      Prop ("Columns: " & Columns'Image);
-      Prop ("First Column Width: " & First_Column_Width'Image);
-      Prop ("Last Column Width:  " & Last_Column_Width'Image);
-      Prop ("Alignment:          " & Alignment'Image);
-      Prop ("Header kind:        " & Header_Kind'Image);
+      Detail.Trace (Self, "Start_Table");
+      Detail.Trace (Self, "Columns: " & Columns'Image);
+      Detail.Trace (Self, "First Column Width: " & First_Column_Width'Image);
+      Detail.Trace (Self, "Last Column Width:  " & Last_Column_Width'Image);
+      Detail.Trace (Self, "Alignment:          " & Alignment'Image);
+      Detail.Trace (Self, "Header kind:        " & Header_Kind'Image);
    end Start_Table;
 
    procedure Table_Marker (
@@ -538,8 +462,8 @@ package body ARM_Ada_Lang_IO is
       Marker : in ARM_Output.Table_Marker_Type
    ) is
    begin
-      Func (Self, "Table_Marker");
-      Prop ("Marker: " & Marker'Image);
+      Detail.Trace (Self, "Table_Marker");
+      Detail.Trace (Self, "Marker: " & Marker'Image);
    end Table_Marker;
 
    -- Output a separator line. It is thin if "Is_Thin" is true.
@@ -548,7 +472,7 @@ package body ARM_Ada_Lang_IO is
      (Self : in out Ada_Lang_IO_Output_Type; Is_Thin : Boolean := True)
    is
    begin
-      Func (Self, "Separator_Line");
+      Detail.Trace (Self, "Separator_Line");
    end Separator_Line;
 
    -- Text output: These are only allowed after a Start_Paragraph and
@@ -559,8 +483,8 @@ package body ARM_Ada_Lang_IO is
      (Self : in out Ada_Lang_IO_Output_Type; Text : in String)
    is
    begin
-      --  Func (Self, "Ordinary_Text");
-      --  Prop ("Text: " & Text);
+      --  Detail.Trace (Self, "Ordinary_Text");
+      --  Detail.Trace (Self, "Text: " & Text);
       --  Detail.Put_Line (Self, Text);
       for Char of Text loop
          Detail.Append (Self, Char);
@@ -571,15 +495,15 @@ package body ARM_Ada_Lang_IO is
      (Self : in out Ada_Lang_IO_Output_Type; Char : in Character)
    is
    begin
-      --  Func (Self, "Ordinary_Character");
-      --  Prop ("Char: " & Char'Image);
+      --  Detail.Trace (Self, "Ordinary_Character");
+      --  Detail.Trace (Self, "Char: " & Char'Image);
       Detail.Append (Self, Safe_Char (Self.In_Code_Block, Char));
    end Ordinary_Character;
 
    procedure Hard_Space (Self : in out Ada_Lang_IO_Output_Type) is
    begin
       -- Just treat as a space.
-      --  Func (Self, "Hard_Space");
+      --  Detail.Trace (Self, "Hard_Space");
       Ordinary_Character (Self, ' ');
    end Hard_Space;
 
@@ -587,7 +511,7 @@ package body ARM_Ada_Lang_IO is
    -- This corresponds to a "<BR>" in HTML.
    procedure Line_Break (Self : in out Ada_Lang_IO_Output_Type) is
    begin
-      --  Func (Self, "Line_Break");
+      --  Detail.Trace (Self, "Line_Break");
       --  Detail.New_Line (Self, 1);
       Ordinary_Character (Self, Ada.Characters.Latin_1.LF);
    end Line_Break;
@@ -603,7 +527,7 @@ package body ARM_Ada_Lang_IO is
    begin
       pragma Unreferenced (Self);
       pragma Unreferenced (Clear_Keep_with_Next);
-      --  Func (Self, "Index_Line_Break");
+      --  Detail.Trace (Self, "Index_Line_Break");
    end Index_Line_Break;
 
    -- Output a soft line break. This is a place (in the middle of a
@@ -613,7 +537,7 @@ package body ARM_Ada_Lang_IO is
    begin
       -- Ignored since this is a web based format.
       pragma Unreferenced (Self);
-      --  Func (Self, "Soft_Line_Break");      
+      --  Detail.Trace (Self, "Soft_Line_Break");      
    end Soft_Line_Break;
 
    -- Output a soft line break, with a hyphen. This is a place (in the middle of
@@ -623,7 +547,7 @@ package body ARM_Ada_Lang_IO is
    begin
       -- Soft hyphens are ignored.
       pragma Unreferenced (Self);
-      --  Func (Self, "Soft_Hyphen_Break");
+      --  Detail.Trace (Self, "Soft_Hyphen_Break");
    end Soft_Hyphen_Break;
 
    -- Output a tab, inserting space up to the next tab stop.
@@ -632,7 +556,7 @@ package body ARM_Ada_Lang_IO is
    procedure Tab (Self : in out Ada_Lang_IO_Output_Type) is
    begin
       Ordinary_Character (Self, Ada.Characters.Latin_1.HT);
-      --  Func (Self, "Tab");
+      --  Detail.Trace (Self, "Tab");
    end Tab;
 
    -- Output an special character.
@@ -641,8 +565,8 @@ package body ARM_Ada_Lang_IO is
       Char : in ARM_Output.Special_Character_Type)
    is
    begin
-      --  Func (Self, "Special_Character");
-      --  Prop ("Char: " & Char'Image);
+      --  Detail.Trace (Self, "Special_Character");
+      --  Detail.Trace (Self, "Char: " & Char'Image);
       case Char is
          when ARM_Output.EM_Dash => Ordinary_Character (Self, '-');
          when ARM_Output.Left_Double_Quote => Ordinary_Character (Self, '"');
@@ -677,8 +601,8 @@ package body ARM_Ada_Lang_IO is
    is
       Char_Code : constant String := ARM_Output.Unicode_Type'Image (Char);
    begin
-      Func (Self, "Unicode_Character");
-      Prop ("Char_Code: " & Char_Code);
+      Detail.Trace (Self, "Unicode_Character");
+      Detail.Trace (Self, "Char_Code: " & Char_Code);
    end Unicode_Character;
 
    -- Marks the end of a hanging item. Call only once per paragraph.
@@ -688,7 +612,7 @@ package body ARM_Ada_Lang_IO is
    -- with No_Prefix = True.
    procedure End_Hang_Item (Self : in out Ada_Lang_IO_Output_Type) is
    begin
-      Func (Self, "End_Hang_Item");
+      Detail.Trace (Self, "End_Hang_Item");
    end End_Hang_Item;
 
    -- Change the text format so that all of the properties are as specified.
@@ -734,17 +658,17 @@ package body ARM_Ada_Lang_IO is
          end if;
       end if;
 
-      --  Func (Self, "Text_Format");
-      --  Prop ("Format: ");
-      --  Prop ("Bold: " & Format.Bold'Image, 2);
-      --  Prop ("Italic: " & Format.Italic'Image, 2);
-      --  Prop ("Font: " & Format.Font'Image, 2);
-      --  Prop ("Size: " & Format.Size'Image, 2);
-      --  Prop ("Color: " & Format.Color'Image, 2);
-      --  Prop ("Change: " & Format.Change'Image, 2);
-      --  Prop ("Version: " & Format.Version'Image, 2);
-      --  Prop ("Added_Version: " & Format.Added_Version'Image, 2);
-      --  Prop ("Location: " & Format.Location'Image, 2);
+      --  Detail.Trace (Self, "Text_Format");
+      --  Detail.Trace (Self, "Format: ");
+      --  Detail.Trace (Self, "Bold: " & Format.Bold'Image, 2);
+      --  Detail.Trace (Self, "Italic: " & Format.Italic'Image, 2);
+      --  Detail.Trace (Self, "Font: " & Format.Font'Image, 2);
+      --  Detail.Trace (Self, "Size: " & Format.Size'Image, 2);
+      --  Detail.Trace (Self, "Color: " & Format.Color'Image, 2);
+      --  Detail.Trace (Self, "Change: " & Format.Change'Image, 2);
+      --  Detail.Trace (Self, "Version: " & Format.Version'Image, 2);
+      --  Detail.Trace (Self, "Added_Version: " & Format.Added_Version'Image, 2);
+      --  Detail.Trace (Self, "Location: " & Format.Location'Image, 2);
 
       --  Detail.Trace (Self, Format_To_String (Format));
 
@@ -767,8 +691,8 @@ package body ARM_Ada_Lang_IO is
       Clause_Number : in String
    ) is
    begin
-      --  Func (Self, "Clause_Reference");
-      --  Prop ("Clause Number: " & Clause_Number);
+      --  Detail.Trace (Self, "Clause_Reference");
+      --  Detail.Trace (Self, "Clause Number: " & Clause_Number);
 
       -- Ignore this by consuming the buffer.
       --  Self.Buffer := Ada.Strings.Unbounded.Null_Unbounded_String;
@@ -787,8 +711,8 @@ package body ARM_Ada_Lang_IO is
    begin
       pragma Unreferenced (Self);
       pragma Unreferenced (Index_Key);
-      --  Func (Self, "Index_Target");
-      --  Prop ("Index Key: " & Index_Key'Image);
+      --  Detail.Trace (Self, "Index_Target");
+      --  Detail.Trace (Self, "Index Key: " & Index_Key'Image);
    end Index_Target;
 
    -- Generate a reference to an index target in the standard. The text
@@ -805,9 +729,9 @@ package body ARM_Ada_Lang_IO is
       pragma Unreferenced (Index_Key);
       pragma Unreferenced (Clause_Number);
 
-      --  Func (Self, "Index_Reference");
-      --  Prop ("Text: " & Text);
-      --  Prop ("Index_Key: " & Index_Key'Image);
+      --  Detail.Trace (Self, "Index_Reference");
+      --  Detail.Trace (Self, "Text: " & Text);
+      --  Detail.Trace (Self, "Index_Key: " & Index_Key'Image);
 
       Detail.Append (Self, Text);
    end Index_Reference;
@@ -824,8 +748,8 @@ package body ARM_Ada_Lang_IO is
       DR_Number : in String)
    is
    begin
-      --  Func (Self, "DR_Reference");
-      --  Prop ("DR Number: " & DR_Number);
+      --  Detail.Trace (Self, "DR_Reference");
+      --  Detail.Trace (Self, "DR Number: " & DR_Number);
 
       Detail.Append (Self, Text);
    end DR_Reference;
@@ -839,9 +763,9 @@ package body ARM_Ada_Lang_IO is
       Text : in String;
       AI_Number : in String)
    is begin
-      --  Func (Self, "AI_Reference");
-      --  Prop ("Text: " & Text);
-      --  Prop ("AI_Number: " & AI_Number);
+      --  Detail.Trace (Self, "AI_Reference");
+      --  Detail.Trace (Self, "Text: " & Text);
+      --  Detail.Trace (Self, "AI_Number: " & AI_Number);
       --  Detail.Append (Self, (if Self.In_Code_Block then JSX_Wrap (Text) else Text));
       Detail.Append (Self, JSX_Wrap (Text));
    end AI_Reference;
@@ -856,9 +780,9 @@ package body ARM_Ada_Lang_IO is
       Target : in String)
    is
    begin
-      --  Func (Self, "Local_Target");
-      --  Prop ("Text: " & Text);
-      --  Prop ("Target: " & Target);
+      --  Detail.Trace (Self, "Local_Target");
+      --  Detail.Trace (Self, "Text: " & Text);
+      --  Detail.Trace (Self, "Target: " & Target);
 
       Detail.Append (Self, 
          "<a id=""" & Target & """>"
@@ -877,10 +801,10 @@ package body ARM_Ada_Lang_IO is
       Clause_Number : in String)
    is
    begin
-      --  Func (Self, "Local_Link");
-      --  Prop ("Text: " & Text);
-      --  Prop ("Target: " & Target);
-      --  Prop ("Clause Number: " & Clause_Number);
+      --  Detail.Trace (Self, "Local_Link");
+      --  Detail.Trace (Self, "Text: " & Text);
+      --  Detail.Trace (Self, "Target: " & Target);
+      --  Detail.Trace (Self, "Clause Number: " & Clause_Number);
 
       Detail.Append (Self, Make_Link (Text, Make_Clause_File_Name (Clause_Number) & "#" & Target, Self.In_Code_Block));
    end Local_Link;
@@ -896,9 +820,9 @@ package body ARM_Ada_Lang_IO is
       Clause_Number : in String)
    is
    begin
-      --  Func (Self, "Local_Link_Start");
-      --  Prop ("Target: " & Target);
-      --  Prop ("Clause Number: " & Clause_Number);
+      --  Detail.Trace (Self, "Local_Link_Start");
+      --  Detail.Trace (Self, "Target: " & Target);
+      --  Detail.Trace (Self, "Clause Number: " & Clause_Number);
 
       -- todo: start link
       Detail.Append (Self, "<a href=""" & Make_Clause_File_Name (Clause_Number) & "#" & Target & """>");
@@ -914,9 +838,9 @@ package body ARM_Ada_Lang_IO is
       Clause_Number : in String)
    is
    begin
-      --  Func (Self, "Local_Link_End");
-      --  Prop ("Target: " & Target);
-      --  Prop ("Clause Number: " & Clause_Number);
+      --  Detail.Trace (Self, "Local_Link_End");
+      --  Detail.Trace (Self, "Target: " & Target);
+      --  Detail.Trace (Self, "Clause Number: " & Clause_Number);
       Detail.Append (Self, "</a>");
    end Local_Link_End;
 
@@ -930,9 +854,9 @@ package body ARM_Ada_Lang_IO is
       URL : in String)
    is
    begin
-      Func (Self, "URL_Link");
-      Prop ("Text: " & Text);
-      Prop ("URL: " & URL);
+      Detail.Trace (Self, "URL_Link");
+      Detail.Trace (Self, "Text: " & Text);
+      Detail.Trace (Self, "URL: " & URL);
 
       Detail.Append (Self, Make_Link (Text, URL, Self.In_Code_Block));
    end URL_Link;
@@ -956,13 +880,13 @@ package body ARM_Ada_Lang_IO is
       Border        : in ARM_Output.Border_Kind)
    is
    begin
-      Func (Self, "Picture");
-      Prop ("Name: " & Name);
-      Prop ("Description: " & Descr);
-      Prop ("Alignment: " & Alignment'Image);
-      Prop ("Height: " & Height'Image);
-      Prop ("Width: " & Width'Image);
-      Prop ("Border: " & Border'Image);
+      Detail.Trace (Self, "Picture");
+      Detail.Trace (Self, "Name: " & Name);
+      Detail.Trace (Self, "Description: " & Descr);
+      Detail.Trace (Self, "Alignment: " & Alignment'Image);
+      Detail.Trace (Self, "Height: " & Height'Image);
+      Detail.Trace (Self, "Width: " & Width'Image);
+      Detail.Trace (Self, "Border: " & Border'Image);
    end Picture;
 
 end ARM_Ada_Lang_IO;

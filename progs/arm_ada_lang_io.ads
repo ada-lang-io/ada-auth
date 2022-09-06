@@ -364,6 +364,7 @@ private
    end record;
 
    type Ada_Lang_IO_Output_Type is new ARM_Output.Output_Type with record
+      File_Prefix : Ada.Strings.Unbounded.Unbounded_String;
       Current_File : Ada.Text_IO.File_Type;
       Output_Path : Ada.Strings.Unbounded.Unbounded_String;
 

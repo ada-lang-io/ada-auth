@@ -14,6 +14,21 @@ package body ARM_Ada_Lang_IO is
 
    function JSX_Wrap (S : String) return String is ( "{""" & S & """}");
 
+   function Safe_Char (In_Code_Block : Boolean; Char : Character) return String is
+   begin
+      case Char is
+         when '<' => return JSX_Wrap ("<");  -- "&lt;";
+         when '>' => return JSX_Wrap (">");  -- "&gt;";
+         --  when '{' => return (if In_Code_Block then JSX_Wrap ("{") else "{");
+         --  when '}' => return (if In_Code_Block then JSX_Wrap ("}") else "}");
+         --  when Ada.Characters.Latin_1.LF => return (if In_Code_Block then JSX_Wrap ("\n") else (1 => Ada.Characters.Latin_1.LF));
+         when '{' => return JSX_Wrap ("{");
+         when '}' => return JSX_Wrap ("}");
+         when Ada.Characters.Latin_1.LF => return (if In_Code_Block then JSX_Wrap ("\n") else ""); -- (1 => Ada.Characters.Latin_1.LF));
+         when others => return (1 => Char);
+      end case;
+   end Safe_Char;
+
    package Detail is
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; Char : Character);
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; S : String);
@@ -93,14 +108,15 @@ package body ARM_Ada_Lang_IO is
 
    function Make_Link (Name : String; Target : String; In_Code_Block : Boolean) return String is
    begin
-      return (if In_Code_Block then "<a href=""" & Target & """" & ">" & Name & "</a>"
-         else "[" & Name & "](" & Target & ")");
+      return "<a href=""" & Target & """" & ">" & Name & "</a>";
+      --  return (if In_Code_Block then "<a href=""" & Target & """" & ">" & Name & "</a>"
+      --     else "[" & Name & "](" & Target & ")");
    end Make_Link;
 
    package body Detail is
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; Char : Character) is
       begin
-         Ada.Strings.Unbounded.Append (Self.Buffer, Char);
+         Ada.Strings.Unbounded.Append (Self.Buffer, Safe_Char (Self.In_Code_Block, Char));
       end Append;
 
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; S : String) is
@@ -142,24 +158,6 @@ package body ARM_Ada_Lang_IO is
          New_Line (Self.Current_File, Count);
       end New_Line;
 
-      procedure Format_Begin (Self : in out Ada_Lang_IO_Output_Type; Format : ARM_Output.Format_Type) is
-      begin
-         case Format.Font is
-            when ARM_Output.Swiss =>
-               Put (Self, '`');
-            when others => null;
-         end case;
-      end Format_Begin;
-
-      procedure Format_End (Self : in out Ada_Lang_IO_Output_Type; Format : ARM_Output.Format_Type) is
-      begin
-         case Format.Font is
-            when ARM_Output.Swiss =>
-               Put (Self, '`');
-            when others => null;
-         end case;
-      end Format_End;
-
       procedure Trace (Self : in out Ada_Lang_IO_Output_Type; S : String) is
       begin
          --  Put_Line (Self, "@@@ " & S);
@@ -184,9 +182,7 @@ package body ARM_Ada_Lang_IO is
             end case;
 
             --  Detail.Put_Line (Self, "@" & Format_to_String (Self.Current_Format));
-            Format_Begin (Self, Self.Current_Format);
             Detail.Put (Self, Ada.Strings.Unbounded.To_String (Self.Buffer));
-            Format_End (Self, Self.Current_Format);
 
             case Self.Current_Paragraph.Style is
                when Code_Block_Style =>
@@ -374,11 +370,18 @@ package body ARM_Ada_Lang_IO is
       Self.Current_Paragraph := New_Paragraph;
 
       Self.In_Code_Block := Style in Code_Block_Style;
+
+      if not Self.In_Code_Block then
+         Detail.Append (Self, "<p>");
+      end if;
    end Start_Paragraph;
 
    procedure End_Paragraph (Self : in out Ada_Lang_IO_Output_Type) is
    begin
       --  Func (Self, "End_Paragraph");
+      if not Self.In_Code_Block then
+         Detail.Append (Self, "</p>");
+      end if;
       Detail.Append (Self, Ada.Characters.Latin_1.LF);
       Detail.Flush (Self);
       Detail.Trace (Self, "End_Paragraph");
@@ -551,20 +554,10 @@ package body ARM_Ada_Lang_IO is
       --  Func (Self, "Ordinary_Text");
       --  Prop ("Text: " & Text);
       --  Detail.Put_Line (Self, Text);
-      Detail.Append (Self, Text);
+      for Char of Text loop
+         Detail.Append (Self, Char);
+      end loop;
    end Ordinary_Text;
-
-   function Safe_Char (In_Code_Block : Boolean; Char : Character) return String is
-   begin
-      case Char is
-         when '<' => return "&lt;";
-         when '>' => return "&gt;";
-         when '{' => return (if In_Code_Block then JSX_Wrap ("{") else "{");
-         when '}' => return (if In_Code_Block then JSX_Wrap ("}") else "}");
-         when Ada.Characters.Latin_1.LF => return (if In_Code_Block then JSX_Wrap ("\n") else (1 => Ada.Characters.Latin_1.LF));
-         when others => return (1 => Char);
-      end case;
-   end Safe_Char;
 
    procedure Ordinary_Character
      (Self : in out Ada_Lang_IO_Output_Type; Char : in Character)
@@ -697,7 +690,42 @@ package body ARM_Ada_Lang_IO is
    procedure Text_Format
      (Self : in out Ada_Lang_IO_Output_Type;
       Format : in ARM_Output.Format_Type)
-   is begin
+   is
+      use type ARM_Output.Font_Family_Type;
+      use type ARM_Output.Format_Type;
+   begin
+      if not Self.In_Code_Block then
+         -- Turn off any changed formatting before turning on any formatting
+         -- and also turn off formatting in the inverse order as added
+         -- formatting to keep stack-like behavior when multiple states change
+         -- at once.
+         if Format /= Self.Current_Format then
+            if Format.Font /= ARM_Output.Swiss and then Self.Current_Format.Font = ARM_Output.Swiss then
+               Detail.Append (Self, "</code>");  
+            end if;
+
+            if Format.Italic /= Self.Current_Format.Italic and then not Format.Italic then
+               Detail.Append (Self, "</em>");
+            end if;
+
+            if Format.Bold /= Self.Current_Format.Bold and then not Format.Bold then
+               Detail.Append (Self, "</strong>");
+            end if;
+
+            if Format.Bold /= Self.Current_Format.Bold and then Format.Bold then
+               Detail.Append (Self, "<strong>");
+            end if;
+
+            if Format.Italic /= Self.Current_Format.Italic and then Format.Italic then
+               Detail.Append (Self, "<em>");
+            end if;
+
+            if Format.Font = ARM_Output.Swiss and then Self.Current_Format.Font /= ARM_Output.Swiss then
+               Detail.Append (Self, "<code>");  
+            end if;
+         end if;
+      end if;
+
       --  Func (Self, "Text_Format");
       --  Prop ("Format: ");
       --  Prop ("Bold: " & Format.Bold'Image, 2);
@@ -806,7 +834,8 @@ package body ARM_Ada_Lang_IO is
       --  Func (Self, "AI_Reference");
       --  Prop ("Text: " & Text);
       --  Prop ("AI_Number: " & AI_Number);
-      Detail.Append (Self, (if Self.In_Code_Block then JSX_Wrap (Text) else Text));
+      --  Detail.Append (Self, (if Self.In_Code_Block then JSX_Wrap (Text) else Text));
+      Detail.Append (Self, JSX_Wrap (Text));
    end AI_Reference;
 
    -- Generate a local target. This marks the potential target of local

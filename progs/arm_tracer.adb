@@ -302,7 +302,10 @@ package body ARM_Tracer is
    begin
       Func (Self, "Ordinary_Text");
       Prop ("Text: " & Text);
-      Ada.Strings.Unbounded.Append (Self.Buffer, Text);
+      Trace ("Ordinary Text: " & Text);
+      for Char of Text loop
+         Ada.Strings.Unbounded.Append (Self.Buffer, Char);
+      end loop;
    end Ordinary_Text;
 
    procedure Hard_Space (Self : in out Tracer_Output_Type) is
@@ -419,7 +422,7 @@ package body ARM_Tracer is
       Prop ("Version: " & Format.Version'Image, 2);
       Prop ("Added_Version: " & Format.Added_Version'Image, 2);
       Prop ("Location: " & Format.Location'Image, 2);
-      --  Trace ("Text_Format: " & Format_To_String (Format));
+      Trace ("Text_Format: " & Format_To_String (Format));
       Ordinary_Character (Self, '|');
    end Text_Format;
 

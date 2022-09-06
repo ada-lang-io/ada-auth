@@ -421,9 +421,17 @@ package body ARM_Ada_Lang_IO is
       Top_Level_Subdivision_Name : in ARM_Output.Top_Level_Subdivision_Name_Kind;
       No_Page_Break : in Boolean := False)
    is
-      File_Name : String := "AA-" & (if Clause_Number = "" and then
-		(Header_Text = "Table of Contents" or else -- Ada 95 format
-		 Header_Text = "Contents") then "TOC" else Clause_Number) & ".mdx";
+      Annex_String : constant String := "Annex ";
+      File_Name : String := "AA-"
+         & (if Clause_Number = "" and then
+            (Header_Text = "Table of Contents" or else -- Ada 95 format
+		       Header_Text = "Contents") then "TOC"
+            else
+               (if Ada.Strings.Fixed.Index (Clause_Number, Annex_String) = 1
+               then Clause_Number (Annex_String'Last + 2 - Clause_Number'First .. Clause_Number'Last)
+               else Clause_Number)
+            )
+      & ".mdx";
    begin
       --  Func (Self, "Clause_Header");
       --  Prop ("Header Text:   " & Header_Text);

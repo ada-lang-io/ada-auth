@@ -12,17 +12,18 @@ use Ada.Text_IO;
 package body ARM_Ada_Lang_IO is
    --  Identifies code blocks requiring a <CodeBlock> tag.
    subtype Code_Block_Style is ARM_Output.Paragraph_Style_Type range ARM_Output.Examples .. ARM_Output.Small_Swiss_Examples;
+   subtype Admonition_Style is ARM_Output.Paragraph_Style_Type range ARM_Output.Small .. ARM_Output.Small;
 
    function JSX_Wrap (S : String) return String is ( "{""" & S & """}");
 
-   function Safe_Char (In_Code_Block : Boolean; Char : Character) return String is
+   function Safe_Char (In_Block_Tag : Boolean; Char : Character) return String is
    begin
       case Char is
          when '<' => return JSX_Wrap ("<");
          when '>' => return JSX_Wrap (">");
          when '{' => return JSX_Wrap ("{");
          when '}' => return JSX_Wrap ("}");
-         when Ada.Characters.Latin_1.LF => return (if In_Code_Block then JSX_Wrap ("\n") else ""); -- (1 => Ada.Characters.Latin_1.LF));
+         when Ada.Characters.Latin_1.LF => return (if In_Block_Tag then JSX_Wrap ("\n") else ""); -- (1 => Ada.Characters.Latin_1.LF));
          when others => return (1 => Char);
       end case;
    end Safe_Char;
@@ -58,6 +59,7 @@ package body ARM_Ada_Lang_IO is
    begin
       Detail.New_Line (Self);
       Detail.Put_Line (Self, "import CodeBlock from ""@theme/CodeBlock"";");
+      Detail.Put_Line (Self, "import Admonition from ""@theme/Admonition"";");
       Detail.New_Line (Self);
    end Include_React_Elements;
 
@@ -140,7 +142,7 @@ package body ARM_Ada_Lang_IO is
       );
    end Paragraph_To_String;
 
-   function Make_Link (Name : String; Target : String; In_Code_Block : Boolean) return String is
+   function Make_Link (Name : String; Target : String; In_Block_Tag : Boolean) return String is
    begin
       return "<a href=""" & Target & """" & ">" & Name & "</a>";
    end Make_Link;
@@ -148,7 +150,7 @@ package body ARM_Ada_Lang_IO is
    package body Detail is
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; Char : Character) is
       begin
-         Ada.Strings.Unbounded.Append (Self.Buffer, Safe_Char (Self.In_Code_Block, Char));
+         Ada.Strings.Unbounded.Append (Self.Buffer, Safe_Char (Self.In_Block_Tag, Char));
       end Append;
 
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; S : String) is
@@ -231,12 +233,11 @@ package body ARM_Ada_Lang_IO is
                   Detail.Put_Line (Self, "<CodeBlock>");
                when ARM_Output.Small
                | ARM_Output.Small_Wide_Above => null;
-                  --  Detail.Put_Line (Self, ":::note");
+                  Detail.Put_Line (Self, "<Admonition type=""note"">");
                when others =>
                   null;
             end case;
 
-            --  Detail.Put_Line (Self, "@" & Format_to_String (Self.Current_Format));
             Detail.Put (Self, Ada.Strings.Unbounded.To_String (Self.Buffer));
 
             case Self.Current_Paragraph.Style is
@@ -245,8 +246,7 @@ package body ARM_Ada_Lang_IO is
                   Detail.Put_Line (Self, "</CodeBlock>");
                when ARM_Output.Small
                | ARM_Output.Small_Wide_Above => null;
-                  --  Detail.New_Line (Self);
-                  --  Detail.Put_Line (Self, ":::");
+                  Detail.Put_Line (Self, "</Admonition>");
                when others =>
                   null;
             end case;
@@ -359,23 +359,23 @@ package body ARM_Ada_Lang_IO is
 
       Self.Current_Paragraph := New_Paragraph;
 
-      Self.In_Code_Block := Style in Code_Block_Style;
+      Self.In_Block_Tag := Style in Code_Block_Style;
 
-      if not Self.In_Code_Block then
+      if not Self.In_Block_Tag then
          Detail.Append (Self, "<p>");
       end if;
    end Start_Paragraph;
 
    procedure End_Paragraph (Self : in out Ada_Lang_IO_Output_Type) is
    begin
-      if not Self.In_Code_Block then
+      if not Self.In_Block_Tag then
          Detail.Append (Self, "</p>");
       end if;
       Detail.Append (Self, Ada.Characters.Latin_1.LF);
       Detail.Flush (Self);
       Detail.Trace (Self, "End_Paragraph");
 
-      Self.In_Code_Block := False;
+      Self.In_Block_Tag := False;
    end End_Paragraph;
 
    -- Output a Category header (that is, "Legality Rules",
@@ -539,7 +539,7 @@ package body ARM_Ada_Lang_IO is
    begin
       --  Detail.Trace (Self, "Ordinary_Character");
       --  Detail.Trace (Self, "Char: " & Char'Image);
-      Detail.Append (Self, Safe_Char (Self.In_Code_Block, Char));
+      Detail.Append (Self, Safe_Char (Self.In_Block_Tag, Char));
    end Ordinary_Character;
 
    procedure Hard_Space (Self : in out Ada_Lang_IO_Output_Type) is
@@ -668,7 +668,7 @@ package body ARM_Ada_Lang_IO is
       use type ARM_Output.Font_Family_Type;
       use type ARM_Output.Format_Type;
    begin
-      if not Self.In_Code_Block then
+      if not Self.In_Block_Tag then
          -- Turn off any changed formatting before turning on any formatting
          -- and also turn off formatting in the inverse order as added
          -- formatting to keep stack-like behavior when multiple states change
@@ -808,7 +808,7 @@ package body ARM_Ada_Lang_IO is
       --  Detail.Trace (Self, "AI_Reference");
       --  Detail.Trace (Self, "Text: " & Text);
       --  Detail.Trace (Self, "AI_Number: " & AI_Number);
-      --  Detail.Append (Self, (if Self.In_Code_Block then JSX_Wrap (Text) else Text));
+      --  Detail.Append (Self, (if Self.In_Block_Tag then JSX_Wrap (Text) else Text));
       Detail.Append (Self, JSX_Wrap (Text));
    end AI_Reference;
 
@@ -848,7 +848,7 @@ package body ARM_Ada_Lang_IO is
       --  Detail.Trace (Self, "Target: " & Target);
       --  Detail.Trace (Self, "Clause Number: " & Clause_Number);
 
-      Detail.Append (Self, Make_Link (Text, "../" & Make_Clause_File_Name (Self, Clause_Number) & "#" & Target, Self.In_Code_Block));
+      Detail.Append (Self, Make_Link (Text, "../" & Make_Clause_File_Name (Self, Clause_Number) & "#" & Target, Self.In_Block_Tag));
    end Local_Link;
 
    -- Generate a local link to the target and clause given.
@@ -900,7 +900,7 @@ package body ARM_Ada_Lang_IO is
       Detail.Trace (Self, "Text: " & Text);
       Detail.Trace (Self, "URL: " & URL);
 
-      Detail.Append (Self, Make_Link (Text, URL, Self.In_Code_Block));
+      Detail.Append (Self, Make_Link (Text, URL, Self.In_Block_Tag));
    end URL_Link;
 
    -- Generate a picture.

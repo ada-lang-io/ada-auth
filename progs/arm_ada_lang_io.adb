@@ -1,5 +1,6 @@
 with ARM_Output;
 with ARM_Contents;
+with Ada.Directories;
 with Ada.Text_IO;
 with Ada.Exceptions;
 with Ada.Strings.Fixed;
@@ -70,8 +71,26 @@ package body ARM_Ada_Lang_IO is
       Dot_Set : constant Ada.Strings.Maps.Character_Set := Ada.Strings.Maps.To_Set ('.');
       Dot_Index : constant Natural := Ada.Strings.Fixed.Index (Clause_Number, Dot_Set);
    begin
-      return Clause_Number (Clause_Number'First .. Dot_Index - 1);
+      return (if Dot_Index = 0 then Clause_Number
+         else Clause_Number (Clause_Number'First .. Dot_Index - 1));
    end Find_Top_Level_Clause;
+
+   function Simplify_Clause_Number (Clause_Number : String) return String is
+      Annex_String : constant String := "Annex ";
+   begin
+      return (if Ada.Strings.Fixed.Index (Clause_Number, Annex_String) = 1
+         then Clause_Number (Annex_String'Last + 2 - Clause_Number'First .. Clause_Number'Last)
+         else Clause_Number);
+   end Simplify_Clause_Number;
+
+   function Directory_For_Clause (Self : in out Ada_Lang_IO_Output_Type; Clause_Number : String) return String is
+      Prefix : constant String := Ada.Strings.Unbounded.To_String (Self.File_Prefix);
+   begin
+      return (if Clause_Number /= ""
+         then Prefix & "-" & Find_Top_Level_Clause (Simplify_Clause_Number (Clause_Number))
+         else "")
+         & "/";
+   end Directory_For_Clause;
 
    function Make_Clause_File_Name (
       Self : in out Ada_Lang_IO_Output_Type;
@@ -79,7 +98,8 @@ package body ARM_Ada_Lang_IO is
    is
       Dot_Set : constant Ada.Strings.Maps.Character_Set := Ada.Strings.Maps.To_Set ('.');
       Dot_Index : constant Natural := Ada.Strings.Fixed.Index (Clause_Number, Dot_Set);
-      Prepend : constant String := "./" & Ada.Strings.Unbounded.To_String (Self.File_Prefix) & "-";
+      Prepend : constant String := Directory_For_Clause (Self, Clause_Number)
+         & Ada.Strings.Unbounded.To_String (Self.File_Prefix) & "-";
    begin
       if Dot_Index /= 0 then
          declare
@@ -148,12 +168,19 @@ package body ARM_Ada_Lang_IO is
          Self : in out Ada_Lang_IO_Output_Type;
          File_Name : String;
          Clause_Number : String;
-         Header_Text : String) is
+         Header_Text : String)
+      is
+         Dir : constant String := Ada.Strings.Unbounded.To_String (Self.Output_Path) & Directory_For_Clause (Self, Clause_Number);
       begin   
          Close_File (Self);
 
+         if not Ada.Directories.Exists (Dir) then
+            Detail.Trace (Self, "Creating new directory: " & Dir);
+            Ada.Directories.Create_Path (Dir);
+         end if;
+
          -- Open new file
-         Ada.Text_IO.Create (Self.Current_File, Ada.Text_IO.Out_File, Ada.Strings.Unbounded.To_String (Self.Output_Path) & "/" & File_Name);
+         Ada.Text_IO.Create (Self.Current_File, Ada.Text_IO.Out_File, Dir & File_Name);
 
          Make_New_Sidebar (Self);
          
@@ -246,9 +273,9 @@ package body ARM_Ada_Lang_IO is
      Verbose : Boolean := True)
    is
    begin
-      pragma Unreferenced (File_Prefix);
       pragma Unreferenced (Title);
 
+      Self.File_Prefix := Ada.Strings.Unbounded.To_Unbounded_String (File_Prefix);
       Self.Output_Path := Ada.Strings.Unbounded.To_Unbounded_String (Output_Path);
 
       Ada.Text_IO.Create (Self.Current_File, Ada.Text_IO.Out_File, "Title.mdx");
@@ -821,7 +848,7 @@ package body ARM_Ada_Lang_IO is
       --  Detail.Trace (Self, "Target: " & Target);
       --  Detail.Trace (Self, "Clause Number: " & Clause_Number);
 
-      Detail.Append (Self, Make_Link (Text, Make_Clause_File_Name (Self, Clause_Number) & "#" & Target, Self.In_Code_Block));
+      Detail.Append (Self, Make_Link (Text, "../" & Make_Clause_File_Name (Self, Clause_Number) & "#" & Target, Self.In_Code_Block));
    end Local_Link;
 
    -- Generate a local link to the target and clause given.
@@ -840,7 +867,7 @@ package body ARM_Ada_Lang_IO is
       --  Detail.Trace (Self, "Clause Number: " & Clause_Number);
 
       -- todo: start link
-      Detail.Append (Self, "<a href=""" & Make_Clause_File_Name (Self, Clause_Number) & "#" & Target & """>");
+      Detail.Append (Self, "<a href=""" & "../" & Make_Clause_File_Name (Self, Clause_Number) & "#" & Target & """>");
    end Local_Link_Start;
 
    -- End a local link for the target and clause given.

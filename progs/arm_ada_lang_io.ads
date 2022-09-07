@@ -379,9 +379,10 @@ private
       Current_Paragraph : Paragraph_Styling;
       Verbose : Boolean := True;
 
-      -- Need to emit JSX style HTML tags when in a code block.
+      -- Need to emit JSX style HTML tags when in a block like an admonition
+      -- or a code block.
       -- Also additional characters might need to be escaped, like { and }
-      In_Code_Block : Boolean := False;
+      In_Block_Tag : Boolean := False;
    end record;
 
 end ARM_Ada_Lang_IO;

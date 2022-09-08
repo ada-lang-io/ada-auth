@@ -233,8 +233,9 @@ package body ARM_Ada_Lang_IO is
                   Detail.Put_Line (Self, "<CodeBlock>");
                when ARM_Output.Small
                | ARM_Output.Small_Wide_Above => null;
-                  Detail.Put_Line (Self, "<Admonition type="
-                     & """" & Admonition_Output (Self.Admonition_Format).all & """"
+                  Detail.Put_Line (Self, "<Admonition "
+                     & "type=""aarm"""
+                     & " aarm=""" & Admonition_Output (Self.Admonition_Format).all & """"
                      & " title=""" & Admonition_Texts (Self.Admonition_Format).all & """"
                      & ">");
                when others =>
@@ -685,11 +686,16 @@ package body ARM_Ada_Lang_IO is
       -- Not all admonitions appear at the start of a block, so check for
       -- formatting to know if we're in one or not.
       for Admonition in Admonition_Type loop
-         if Self.Buffer = Admonition_Texts (Admonition).all then
-            Self.Admonition_Format := Admonition;
-            Self.Buffer := Ada.Strings.Unbounded.Null_Unbounded_String;
-            return;
-         end if;
+         declare
+            Admonition_Index : constant Natural := Ada.Strings.Unbounded.Index (Self.Buffer, Admonition_Texts (Admonition).all);
+         begin
+            if Admonition_Index /= 0 then
+               Self.Admonition_Format := Admonition;
+
+               -- Assume admonition was immediately before the formatting.
+               Self.Buffer := Ada.Strings.Unbounded.Unbounded_Slice (Self.Buffer, 1, Admonition_Index - 1);
+            end if;
+         end;
       end loop;
 
       if not Self.In_Block_Tag then

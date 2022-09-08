@@ -363,6 +363,32 @@ private
       Justification  : ARM_Output.Justification_Type := ARM_Output.Default;
    end record;
 
+   type Admonition_Type is (
+      Note,
+      Reason,
+      Discussion,
+      Implementation_Advice,
+      Implementation_Defined,
+      Implementation_Note);
+
+   Admonition_Texts : constant array (Admonition_Type) of access String := (
+      new String'("Note: "),
+      new String'("Reason: "),
+      new String'("Discussion: "),
+      new String'("Implementation Advice: "),
+      new String'("Implementation Defined: "),
+      new String'("Implementation Note: ")
+   );
+
+   Admonition_Output : constant array (Admonition_Type) of access String := (
+      new String'("note"),
+      new String'("reason"),
+      new String'("discussion"),
+      new String'("implementation-advice"),
+      new String'("implementation-defined"),
+      new String'("implementation-note")
+   );
+
    type Ada_Lang_IO_Output_Type is new ARM_Output.Output_Type with record
       File_Prefix : Ada.Strings.Unbounded.Unbounded_String;
       Current_File : Ada.Text_IO.File_Type;
@@ -383,6 +409,7 @@ private
       -- or a code block.
       -- Also additional characters might need to be escaped, like { and }
       In_Block_Tag : Boolean := False;
+      Admonition_Format : Admonition_Type := Note;
    end record;
 
 end ARM_Ada_Lang_IO;

@@ -367,26 +367,41 @@ private
       Note,
       Reason,
       Discussion,
+      Ramification,
       Implementation_Advice,
       Implementation_Defined,
-      Implementation_Note);
+      Implementation_Note,
+      Correction,
+      Glossary_Entry
+   );
 
+   -- These are the texts seen by the formatter.
    Admonition_Texts : constant array (Admonition_Type) of access String := (
       new String'("Note: "),
       new String'("Reason: "),
+      new String'("Ramification: "),
       new String'("Discussion: "),
-      new String'("Implementation Advice: "),
-      new String'("Implementation Defined: "),
-      new String'("Implementation Note: ")
+
+      new String'("Implementation Advice"),
+      new String'("Implementation defined: "),
+      new String'("Implementation Note: "),
+
+      new String'("Correction:"),
+      new String'("Glossary entry: ")
    );
 
    Admonition_Output : constant array (Admonition_Type) of access String := (
       new String'("note"),
       new String'("reason"),
+      new String'("ramification"),
       new String'("discussion"),
+
       new String'("implementation-advice"),
       new String'("implementation-defined"),
-      new String'("implementation-note")
+      new String'("implementation-note"),
+
+      new String'("correction"),
+      new String'("glossary-entry")
    );
 
    type Ada_Lang_IO_Output_Type is new ARM_Output.Output_Type with record

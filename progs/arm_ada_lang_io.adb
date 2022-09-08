@@ -233,7 +233,10 @@ package body ARM_Ada_Lang_IO is
                   Detail.Put_Line (Self, "<CodeBlock>");
                when ARM_Output.Small
                | ARM_Output.Small_Wide_Above => null;
-                  Detail.Put_Line (Self, "<Admonition type=""" & Admonition_Output (Self.Admonition_Format).all & """>");
+                  Detail.Put_Line (Self, "<Admonition type="
+                     & """" & Admonition_Output (Self.Admonition_Format).all & """"
+                     & " title=""" & Admonition_Texts (Self.Admonition_Format).all & """"
+                     & ">");
                when others =>
                   null;
             end case;
@@ -525,11 +528,12 @@ package body ARM_Ada_Lang_IO is
    procedure Ordinary_Text
      (Self : in out Ada_Lang_IO_Output_Type; Text : in String)
    is
-
+      use type Ada.Strings.Unbounded.Unbounded_String;
    begin
       --  Detail.Trace (Self, "Ordinary_Text");
       --  Detail.Trace (Self, "Text: " & Text);
       --  Detail.Put_Line (Self, Text);
+      --  If this isn't an admonition, then output it.
       for Admonition in Admonition_Type loop
          if Text = Admonition_Texts (Admonition).all then
             Self.Admonition_Format := Admonition;
@@ -674,9 +678,20 @@ package body ARM_Ada_Lang_IO is
      (Self : in out Ada_Lang_IO_Output_Type;
       Format : in ARM_Output.Format_Type)
    is
+      use type Ada.Strings.Unbounded.Unbounded_String;
       use type ARM_Output.Font_Family_Type;
       use type ARM_Output.Format_Type;
    begin
+      -- Not all admonitions appear at the start of a block, so check for
+      -- formatting to know if we're in one or not.
+      for Admonition in Admonition_Type loop
+         if Self.Buffer = Admonition_Texts (Admonition).all then
+            Self.Admonition_Format := Admonition;
+            Self.Buffer := Ada.Strings.Unbounded.Null_Unbounded_String;
+            return;
+         end if;
+      end loop;
+
       if not Self.In_Block_Tag then
          -- Turn off any changed formatting before turning on any formatting
          -- and also turn off formatting in the inverse order as added

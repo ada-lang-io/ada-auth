@@ -233,7 +233,7 @@ package body ARM_Ada_Lang_IO is
                   Detail.Put_Line (Self, "<CodeBlock>");
                when ARM_Output.Small
                | ARM_Output.Small_Wide_Above => null;
-                  Detail.Put_Line (Self, "<Admonition type=""note"">");
+                  Detail.Put_Line (Self, "<Admonition type=""" & Admonition_Output (Self.Admonition_Format).all & """>");
                when others =>
                   null;
             end case;
@@ -255,6 +255,7 @@ package body ARM_Ada_Lang_IO is
          end if;
 
          Self.Buffer := Ada.Strings.Unbounded.Null_Unbounded_String;
+         Self.Admonition_Format := Note;
       end Flush;
    end Detail;
 
@@ -524,10 +525,18 @@ package body ARM_Ada_Lang_IO is
    procedure Ordinary_Text
      (Self : in out Ada_Lang_IO_Output_Type; Text : in String)
    is
+
    begin
       --  Detail.Trace (Self, "Ordinary_Text");
       --  Detail.Trace (Self, "Text: " & Text);
       --  Detail.Put_Line (Self, Text);
+      for Admonition in Admonition_Type loop
+         if Text = Admonition_Texts (Admonition).all then
+            Self.Admonition_Format := Admonition;
+            return;
+         end if;
+      end loop;
+
       for Char of Text loop
          Detail.Append (Self, Char);
       end loop;

@@ -228,34 +228,37 @@ package body ARM_Ada_Lang_IO is
          if not (for all X in 1 .. Ada.Strings.Unbounded.Length (Self.Buffer)
                   => Ada.Strings.Unbounded.Element (Self.Buffer, X) = ' ')
          then
-            case Self.Current_Paragraph.Style is
-               when Code_Block_Style =>
-                  Detail.Put_Line (Self, "<CodeBlock>");
-               when ARM_Output.Small
-               | ARM_Output.Small_Wide_Above => null;
-                  Detail.Put_Line (Self, "<Admonition "
-                     & "type=""aarm"""
-                     & " aarm=""" & Admonition_Output (Self.Admonition_Format).all & """"
-                     & " title=""" & Admonition_Texts (Self.Admonition_Format).all & """"
-                     & ">");
-               when others =>
-                  null;
-            end case;
+            -- Ignore glossary definitions
+            if Ada.Strings.Unbounded.Index (Self.Buffer, "Version=") /= 1 then
+               case Self.Current_Paragraph.Style is
+                  when Code_Block_Style =>
+                     Detail.Put_Line (Self, "<CodeBlock>");
+                  when ARM_Output.Small
+                  | ARM_Output.Small_Wide_Above =>
+                     Detail.Put_Line (Self, "<Admonition "
+                        & "type=""aarm"""
+                        & " aarm=""" & Admonition_Output (Self.Admonition_Format).all & """"
+                        & " title=""" & Admonition_Texts (Self.Admonition_Format).all & """"
+                        & ">");
+                  when others =>
+                     Detail.Put (Self, "<p>");
+               end case;
 
-            Detail.Put (Self, Ada.Strings.Unbounded.To_String (Self.Buffer));
+               Detail.Put (Self, Ada.Strings.Unbounded.To_String (Self.Buffer));
 
-            case Self.Current_Paragraph.Style is
-               when Code_Block_Style =>
-                  Detail.New_Line (Self);
-                  Detail.Put_Line (Self, "</CodeBlock>");
-               when ARM_Output.Small
-               | ARM_Output.Small_Wide_Above => null;
-                  Detail.Put_Line (Self, "</Admonition>");
-               when others =>
-                  null;
-            end case;
+               case Self.Current_Paragraph.Style is
+                  when Code_Block_Style =>
+                     Detail.New_Line (Self);
+                     Detail.Put_Line (Self, "</CodeBlock>");
+                  when ARM_Output.Small
+                  | ARM_Output.Small_Wide_Above => null;
+                     Detail.Put_Line (Self, "</Admonition>");
+                  when others =>
+                     Detail.Put_Line (Self, "</p>");
+               end case;
 
-            Detail.New_Line (Self);
+               Detail.New_Line (Self);
+            end if;
          end if;
 
          Self.Buffer := Ada.Strings.Unbounded.Null_Unbounded_String;
@@ -365,17 +368,10 @@ package body ARM_Ada_Lang_IO is
       Self.Current_Paragraph := New_Paragraph;
 
       Self.In_Block_Tag := Style in Code_Block_Style;
-
-      if not Self.In_Block_Tag then
-         Detail.Append (Self, "<p>");
-      end if;
    end Start_Paragraph;
 
    procedure End_Paragraph (Self : in out Ada_Lang_IO_Output_Type) is
    begin
-      if not Self.In_Block_Tag then
-         Detail.Append (Self, "</p>");
-      end if;
       Detail.Append (Self, Ada.Characters.Latin_1.LF);
       Detail.Flush (Self);
       Detail.Trace (Self, "End_Paragraph");

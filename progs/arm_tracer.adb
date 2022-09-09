@@ -216,6 +216,7 @@ package body ARM_Tracer is
       Prop ("Level:         " & Level'Image);
       Prop ("Clause Number: " & Clause_Number);
       Prop ("Top Level Subdivision Name: " & Top_Level_Subdivision_Name'Image);
+      Trace (Clause_Number & Header_Text);
    end Clause_Header;
 
    procedure Revised_Clause_Header
@@ -232,6 +233,7 @@ package body ARM_Tracer is
       Prop ("Clause Number: " & Clause_Number);
       Prop ("Old Version: " & Old_Version'Image);
       Prop ("Top Level Subdivision Name" & Top_Level_Subdivision_Name'Image);
+      Trace ("Revised: " & Clause_Number & New_Header_Text);
    end Revised_Clause_Header;
 
    -- Mark the start (if For_Start is True) or end (if For_Start is

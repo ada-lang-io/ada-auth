@@ -367,6 +367,7 @@ private
       Note,
       Reason,
       Discussion,
+      Proof,
       Ramification,
       Implementation_Advice,
       Implementation_Defined,
@@ -381,6 +382,7 @@ private
       new String'("Reason: "),
       new String'("Ramification: "),
       new String'("Discussion: "),
+      new String'("Proof: "),
 
       new String'("Implementation Advice"),
       new String'("Implementation defined: "),
@@ -395,6 +397,7 @@ private
       new String'("reason"),
       new String'("ramification"),
       new String'("discussion"),
+      new String'("proof"),
 
       new String'("implementation-advice"),
       new String'("implementation-defined"),

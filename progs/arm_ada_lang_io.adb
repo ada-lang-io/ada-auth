@@ -31,6 +31,7 @@ package body ARM_Ada_Lang_IO is
    package Detail is
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; Char : Character);
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; S : String);
+      procedure Anchor (Self : in out Ada_Lang_IO_Output_Type; Target, Text : String);
       procedure Backspace (Self : in out Ada_Lang_IO_Output_Type; Count : Positive);
       procedure Start_File (Self : in out Ada_Lang_IO_Output_Type; File_Name : String; Clause_Number : String; Header_Text : String);
       procedure Put_Line (Self : in out Ada_Lang_IO_Output_Type; S : String);
@@ -174,6 +175,7 @@ package body ARM_Ada_Lang_IO is
       if Self.Mergable_Paragraph then
          End_Paragraph_Style (Self, Self.Current_Paragraph.Style);
       end if;
+
       Detail.New_Line (Self);
       Detail.Put_Line (Self, S);
       Detail.New_Line (Self);
@@ -189,6 +191,14 @@ package body ARM_Ada_Lang_IO is
       begin
          Ada.Strings.Unbounded.Append (Self.Buffer, S);
       end Append;
+
+      procedure Anchor (Self : in out Ada_Lang_IO_Output_Type; Target, Text : String) is
+      begin
+         Detail.Append (Self,
+            "<a id=""" & Target & """>"
+            & Text
+            & "</a>");
+      end Anchor;
 
       procedure Backspace (Self : in out Ada_Lang_IO_Output_Type; Count : Positive) is
          Last_Index : constant Positive := Ada.Strings.Unbounded.Length (Self.Buffer);
@@ -498,13 +508,14 @@ package body ARM_Ada_Lang_IO is
    end Clause_Header;
 
    procedure Revised_Clause_Header
-     (Self : in out Ada_Lang_IO_Output_Type; New_Header_Text : in String;
-      Old_Header_Text : in String; Level : in ARM_Contents.Level_Type;
+     (Self : in out Ada_Lang_IO_Output_Type;
+      New_Header_Text : in String;
+      Old_Header_Text : in String;
+      Level : in ARM_Contents.Level_Type;
       Clause_Number : in String;
       Version : in ARM_Contents.Change_Version_Type;
       Old_Version : in ARM_Contents.Change_Version_Type;
-      Top_Level_Subdivision_Name : in ARM_Output
-        .Top_Level_Subdivision_Name_Kind;
+      Top_Level_Subdivision_Name : in ARM_Output.Top_Level_Subdivision_Name_Kind;
       No_Page_Break : in Boolean := False) is
    begin
       Detail.Trace (Self, "Revised_Clause_Header");
@@ -512,6 +523,8 @@ package body ARM_Ada_Lang_IO is
       Detail.Trace (Self, "Clause Number: " & Clause_Number);
       Detail.Trace (Self, "Old Version: " & Old_Version'Image);
       Detail.Trace (Self, "Top Level Subdivision Name" & Top_Level_Subdivision_Name'Image);
+
+      Clause_Header (Self, New_Header_Text, Level, Clause_Number, Top_Level_Subdivision_Name, No_Page_Break);
    end Revised_Clause_Header;
 
    -- Mark the start (if For_Start is True) or end (if For_Start is
@@ -571,6 +584,7 @@ package body ARM_Ada_Lang_IO is
    is
    begin
       Detail.Trace (Self, "Separator_Line");
+      Self.Last_Was_AI_Reference := False;
    end Separator_Line;
 
    -- Text output: These are only allowed after a Start_Paragraph and
@@ -586,6 +600,8 @@ package body ARM_Ada_Lang_IO is
       --  Detail.Trace (Self, "Text: " & Text);
       --  Detail.Put_Line (Self, Text);
       --  If this isn't an admonition, then output it.
+      Self.Last_Was_AI_Reference := False;
+
       for Admonition in Admonition_Type loop
          if Text = Admonition_Texts (Admonition).all then
             Self.Admonition_Format := Admonition;
@@ -927,10 +943,7 @@ package body ARM_Ada_Lang_IO is
       --  Detail.Trace (Self, "Text: " & Text);
       --  Detail.Trace (Self, "Target: " & Target);
 
-      Detail.Append (Self,
-         "<a id=""" & Target & """>"
-         & Text
-         & "</a>");
+      Detail.Anchor (Self, Target, Text);
    end Local_Target;
 
    -- Generate a local link to the target and clause given.

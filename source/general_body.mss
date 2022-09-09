@@ -9,7 +9,7 @@
 in other files, depending upon the version. Note that the subclause labeled
 "Extent" has its own file, Extent.Mss.}
 
-@LabeledRevisedSubClauseISOCLause{Version=[0],New=[Structure],Old=[Structure]}
+@LabeledSubclause{Structure}
 
 @begin{Intro}
 @begin{NotISO}@Comment{The organization differs from ISO and non-ISO versions, so we need different versions of this text}
@@ -968,7 +968,7 @@ and does not appear in any version of the Ada RM.]}
 @end{DiffWord2012}
 
 
-@LabeledRevisedSubClauseISOCLause{Version=[5],New=[Conformity of an Implementation],Old=[Conformity of an Implementation with the Standard]}
+@LabeledSubclause{Conformity of an Implementation}
 
 @begin{ImplReq}
 
@@ -1381,7 +1381,7 @@ capabilities.
 @end{SingleNote}
 
 
-@LabeledRevisedSubClauseISOCLause{Version=[0],New=[Method of Description and Syntax Notation],Old=[Method of Description and Syntax Notation]}
+@LabeledSubclause{Method of Description and Syntax Notation}
 
 @begin{Intro}
 The form of an Ada program is described by means of a context-free
@@ -1684,7 +1684,7 @@ The preferred places for other line breaks are after semicolons.
 @end{DiffWord2012}
 
 
-@LabeledRevisedSubClauseISOCLause{Version=[0],New=[Classification of Errors],Old=[Classification of Errors]}
+@LabeledSubclause{Classification of Errors}
 
 @begin{Metarules}
    @Chgref{Version=[5],Kind=[AddedNormal],ARef=[AI12-0204-1]}

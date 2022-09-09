@@ -52,9 +52,9 @@ package body ARM_Ada_Lang_IO is
    procedure Print_Manual_Warning (Self : in out Ada_Lang_IO_Output_Type) is
    begin
       Detail.Put_Line (Self, ":::warning");
-      Detail.Put_Line (Self, "We're still working on the Reference manual output.  Internal links are broken,");
-      Detail.Put_Line (Self, "as are a bunch of other things.");
-      Detail.Put_Line (Self, "See the [tracking issue](https://github.com/ada-lang-io/ada-lang-io/issues/20)");
+      Detail.Put_Line (Self, "This Reference Manual output has not been verified,");
+      Detail.Put_Line (Self, "and may contain omissions or errors.");
+      Detail.Put_Line (Self, "Report any problems on the [tracking issue](https://github.com/ada-lang-io/ada-lang-io/issues/20)");
       Detail.Put_Line (Self, ":::");
    end Print_Manual_Warning;
 

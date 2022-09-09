@@ -3,7 +3,7 @@ alr build
 
 Push-Location source
 New-Item -ItemType Directory -Path output -Force
-../.obj/arm_form aa-aarm.msm Ada_Lang_IO New-Only 5 5 "D:\dev\ada\ada-lang-io\docs\arm\"
+../.obj/arm_form aa-aarm.msm Ada_Lang_IO New-Only 0 5 "D:\dev\ada\ada-lang-io\docs\arm\"
 # ../.obj/arm_form aa-aarm.msm Tracer New-Changes 5 5 "D:\dev\ada\ada-lang-io\docs\arm\"
 # ../.obj/arm_form aa-aarm.msm Ada_Lang_IO New-Changes 5
 Pop-Location

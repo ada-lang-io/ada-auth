@@ -163,6 +163,8 @@ package body ARM_Ada_Lang_IO is
             Detail.Put_Line (Self, "</Admonition>");
          when ARM_Output.Text_Prefixed_Style_Subtype =>
             Detail.Put_Line (Self, "</dl>");
+         when ARM_Output.Bullet_Prefixed_Style_Subtype =>
+            Detail.Put_Line (Self, "</ul>");
          when others =>
             Detail.Put_Line (Self, "</p>");
       end case;
@@ -342,7 +344,9 @@ package body ARM_Ada_Lang_IO is
 
    function Is_Mergable_Paragraph (Style : ARM_Output.Paragraph_Style_Type) return Boolean is
    begin
-      return Style in Code_Block_Style or else Style in ARM_Output.Text_Prefixed_Style_Subtype;
+      return Style in Code_Block_Style
+         or else Style in ARM_Output.Text_Prefixed_Style_Subtype
+         or else Style in ARM_Output.Bullet_Prefixed_Style_Subtype;
    end Is_Mergable_Paragraph;
 
    function Can_Merge_Paragraphs (Previous, Next : ARM_Output.Paragraph_Style_Type) return Boolean is
@@ -429,18 +433,25 @@ package body ARM_Ada_Lang_IO is
                         & ">");
                   when ARM_Output.Text_Prefixed_Style_Subtype =>
                      Detail.Put_Line (Self, "<dl>");
+                  when ARM_Output.Bullet_Prefixed_Style_Subtype =>
+                     Detail.Put_Line (Self, "<ul>");
                   when others =>
                      Detail.Put (Self, "<p>");
                end case;
             end if;
 
-            if Self.Current_Paragraph.Style in ARM_Output.Text_Prefixed_Style_Subtype then
-               Detail.Put (Self, "<dd>");
-               Detail.Put (Self, Ada.Strings.Unbounded.To_String (Self.Buffer));
-               Detail.Put (Self, "</dd>");
-            else
-               Detail.Put (Self, Ada.Strings.Unbounded.To_String (Self.Buffer));
-            end if;
+            case Self.Current_Paragraph.Style is
+               when ARM_Output.Text_Prefixed_Style_Subtype =>
+                  Detail.Put (Self, "<dd>");
+                  Detail.Put (Self, Ada.Strings.Unbounded.To_String (Self.Buffer));
+                  Detail.Put (Self, "</dd>");
+               when ARM_Output.Bullet_Prefixed_Style_Subtype =>
+                  Detail.Put (Self, "<li>");
+                  Detail.Put (Self, Ada.Strings.Unbounded.To_String (Self.Buffer));
+                  Detail.Put (Self, "</li>");
+               when others =>
+                  Detail.Put (Self, Ada.Strings.Unbounded.To_String (Self.Buffer));
+            end case;
 
             if not Is_Mergable_Paragraph (Self.Current_Paragraph.Style) then
                End_Paragraph_Style (Self, Self.Current_Paragraph.Style);
@@ -759,7 +770,6 @@ package body ARM_Ada_Lang_IO is
       Detail.Trace (Self, "End_Hang_Item");
       Detail.Put_Line (Self, "<dt><br/>" & Ada.Strings.Unbounded.To_String (Self.Buffer) & "</dt>");
       Self.Buffer := Ada.Strings.Unbounded.Null_Unbounded_String;
-
    end End_Hang_Item;
 
    -- Change the text format so that all of the properties are as specified.

@@ -31,6 +31,7 @@ package body ARM_Ada_Lang_IO is
    package Detail is
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; Char : Character);
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; S : String);
+      procedure Backspace (Self : in out Ada_Lang_IO_Output_Type; Count : Positive);
       procedure Start_File (Self : in out Ada_Lang_IO_Output_Type; File_Name : String; Clause_Number : String; Header_Text : String);
       procedure Put_Line (Self : in out Ada_Lang_IO_Output_Type; S : String);
       procedure Put (Self : in out Ada_Lang_IO_Output_Type; Char : Character);
@@ -163,6 +164,7 @@ package body ARM_Ada_Lang_IO is
             Detail.Put_Line (Self, "</p>");
       end case;
 
+      Self.Last_Was_AI_Reference := False;
       Self.Mergable_Paragraph := False;
       Self.Being_Merged := False;
    end End_Paragraph_Style;
@@ -187,6 +189,12 @@ package body ARM_Ada_Lang_IO is
       begin
          Ada.Strings.Unbounded.Append (Self.Buffer, S);
       end Append;
+
+      procedure Backspace (Self : in out Ada_Lang_IO_Output_Type; Count : Positive) is
+         Last_Index : constant Positive := Ada.Strings.Unbounded.Length (Self.Buffer);
+      begin
+         Self.Buffer := Ada.Strings.Unbounded.Delete (Self.Buffer, Last_Index - Count + 1, Last_Index);
+      end Backspace;
 
       procedure Close_File (Self : in out Ada_Lang_IO_Output_Type) is
       begin
@@ -597,6 +605,15 @@ package body ARM_Ada_Lang_IO is
       --  Detail.Trace (Self, "Ordinary_Character");
       --  Detail.Trace (Self, "Char: " & Char'Image);
       Detail.Append (Self, Safe_Char (Self.In_Block_Tag, Char));
+
+      if Char = '}'
+         and then Self.Last_Was_AI_Reference
+         and then Self.Current_Paragraph.Style in Code_Block_Style
+      then
+         Line_Break (Self);
+      end if;
+
+      Self.Last_Was_AI_Reference := False;
    end Ordinary_Character;
 
    procedure Hard_Space (Self : in out Ada_Lang_IO_Output_Type) is
@@ -604,6 +621,7 @@ package body ARM_Ada_Lang_IO is
       -- Just treat as a space.
       --  Detail.Trace (Self, "Hard_Space");
       Ordinary_Character (Self, ' ');
+      Self.Last_Was_AI_Reference := False;
    end Hard_Space;
 
    -- Output a line break. This does not start a new paragraph.
@@ -613,6 +631,7 @@ package body ARM_Ada_Lang_IO is
       --  Detail.Trace (Self, "Line_Break");
       --  Detail.New_Line (Self, 1);
       Ordinary_Character (Self, Ada.Characters.Latin_1.LF);
+      Self.Last_Was_AI_Reference := False;
    end Line_Break;
 
    -- Output a line break for the index. This does not start a new
@@ -882,7 +901,16 @@ package body ARM_Ada_Lang_IO is
       --  Detail.Trace (Self, "Text: " & Text);
       --  Detail.Trace (Self, "AI_Number: " & AI_Number);
       --  Detail.Append (Self, (if Self.In_Block_Tag then JSX_Wrap (Text) else Text));
+
+      if Self.Current_Paragraph.Style in Code_Block_Style then
+         Detail.Backspace (Self, 5);  -- Delete the previously emitted {"{"}
+         Detail.Append (Self, "--  ");
+         Ordinary_Character (Self, '{');
+      end if;
+
       Detail.Append (Self, JSX_Wrap (Text));
+
+      Self.Last_Was_AI_Reference := True;
    end AI_Reference;
 
    -- Generate a local target. This marks the potential target of local

@@ -426,6 +426,7 @@ private
       -- previous paragraph, to avoid printing start tags.
       Mergable_Paragraph : Boolean := False;
       Being_Merged : Boolean := False;
+      Last_Was_AI_Reference : Boolean := False;
 
       -- Need to emit JSX style HTML tags when in a block like an admonition
       -- or a code block.

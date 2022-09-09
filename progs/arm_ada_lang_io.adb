@@ -166,7 +166,12 @@ package body ARM_Ada_Lang_IO is
          when ARM_Output.Bullet_Prefixed_Style_Subtype =>
             Detail.Put_Line (Self, "</ul>");
          when others =>
-            Detail.Put_Line (Self, "</p>");
+            if Ada.Strings.Unbounded.Index (Self.Buffer, "::=") /= 0 then
+               Detail.New_Line (Self);
+               Detail.Put_Line (Self, "</CodeBlock>");
+            else
+               Detail.Put_Line (Self, "</p>");
+            end if;
       end case;
 
       Self.Last_Was_AI_Reference := False;
@@ -406,7 +411,6 @@ package body ARM_Ada_Lang_IO is
 
       Self.Current_Paragraph := New_Paragraph;
       Self.Mergable_Paragraph := Is_Mergable_Paragraph (Self.Current_Paragraph.Style);
-
       Self.In_Block_Tag := Style in Code_Block_Style;
    end Start_Paragraph;
 
@@ -436,7 +440,15 @@ package body ARM_Ada_Lang_IO is
                   when ARM_Output.Bullet_Prefixed_Style_Subtype =>
                      Detail.Put_Line (Self, "<ul>");
                   when others =>
-                     Detail.Put (Self, "<p>");
+                     if Ada.Strings.Unbounded.Index (Self.Buffer, "::=") /= 0 then
+                        Detail.New_Line (Self);
+                        Detail.Put_Line (Self, "<CodeBlock>");
+                        Self.Current_Paragraph.Style := ARM_Output.Examples;
+                        Self.Mergable_Paragraph := Is_Mergable_Paragraph (Self.Current_Paragraph.Style);
+                        Self.In_Block_Tag := Self.Current_Paragraph.Style in Code_Block_Style;
+                     else
+                        Detail.Put (Self, "<p>");
+                     end if;
                end case;
             end if;
 
@@ -641,6 +653,13 @@ package body ARM_Ada_Lang_IO is
    begin
       --  Detail.Trace (Self, "Ordinary_Character");
       --  Detail.Trace (Self, "Char: " & Char'Image);
+      if not (Char = '}' or else Char = ' ' or else Char = '{' or else Char = Ada.Characters.Latin_1.LF)
+         and then Self.Last_Was_AI_Reference and then Self.Current_Paragraph.Style not in Code_Block_Style
+      then
+         Line_Break (Self);
+         Self.Last_Was_AI_Reference := False;
+      end if;
+
       Detail.Append (Self, Safe_Char (Self.In_Block_Tag, Char));
 
       if Char = '}'
@@ -650,7 +669,6 @@ package body ARM_Ada_Lang_IO is
          Line_Break (Self);
       end if;
 
-      Self.Last_Was_AI_Reference := False;
    end Ordinary_Character;
 
    procedure Hard_Space (Self : in out Ada_Lang_IO_Output_Type) is
@@ -784,6 +802,11 @@ package body ARM_Ada_Lang_IO is
       use type ARM_Output.Font_Family_Type;
       use type ARM_Output.Format_Type;
    begin
+      if Self.Last_Was_AI_Reference and then Format.Font = ARM_Output.Swiss then
+         Line_Break (Self);
+         Self.Last_Was_AI_Reference := False;
+      end if;
+
       -- Not all admonitions appear at the start of a block, so check for
       -- formatting to know if we're in one or not.
       for Admonition in Admonition_Type loop

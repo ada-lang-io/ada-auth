@@ -420,6 +420,13 @@ private
       Current_Paragraph : Paragraph_Styling;
       Verbose : Boolean := True;
 
+      -- Paragraph styles like code blocks get terminated when they need to be
+      -- merged into cohesive wholes.  Track whether the current paragraph is
+      -- mergable and also if the current paragraph is a continuation of the
+      -- previous paragraph, to avoid printing start tags.
+      Mergable_Paragraph : Boolean := False;
+      Being_Merged : Boolean := False;
+
       -- Need to emit JSX style HTML tags when in a block like an admonition
       -- or a code block.
       -- Also additional characters might need to be escaped, like { and }

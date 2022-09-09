@@ -33,8 +33,9 @@ package body ARM_Ada_Lang_IO is
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; S : String);
       procedure Start_File (Self : in out Ada_Lang_IO_Output_Type; File_Name : String; Clause_Number : String; Header_Text : String);
       procedure Put_Line (Self : in out Ada_Lang_IO_Output_Type; S : String);
+      procedure Put (Self : in out Ada_Lang_IO_Output_Type; Char : Character);
+      procedure Put (Self : in out Ada_Lang_IO_Output_Type; S : String);
       procedure New_Line (Self : in out Ada_Lang_IO_Output_Type; Count : Ada.Text_IO.Positive_Count := 1);
-      procedure Flush (Self : in out Ada_Lang_IO_Output_Type);
       procedure Trace (Self : in out Ada_Lang_IO_Output_Type; S : String);
    end Detail;
 
@@ -147,6 +148,35 @@ package body ARM_Ada_Lang_IO is
       return "<a href=""" & Target & """" & ">" & Name & "</a>";
    end Make_Link;
 
+   procedure End_Paragraph_Style (
+      Self : in out Ada_Lang_IO_Output_Type;
+      Style : ARM_Output.Paragraph_Style_Type) is
+   begin
+      case Style is
+         when Code_Block_Style =>
+            Detail.New_Line (Self);
+            Detail.Put_Line (Self, "</CodeBlock>");
+         when ARM_Output.Small
+         | ARM_Output.Small_Wide_Above =>
+            Detail.Put_Line (Self, "</Admonition>");
+         when others =>
+            Detail.Put_Line (Self, "</p>");
+      end case;
+
+      Self.Mergable_Paragraph := False;
+      Self.Being_Merged := False;
+   end End_Paragraph_Style;
+
+   procedure Put_Heading (Self : in out Ada_Lang_IO_Output_Type; S : String) is
+   begin
+      if Self.Mergable_Paragraph then
+         End_Paragraph_Style (Self, Self.Current_Paragraph.Style);
+      end if;
+      Detail.New_Line (Self);
+      Detail.Put_Line (Self, S);
+      Detail.New_Line (Self);
+   end Put_Heading;
+
    package body Detail is
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; Char : Character) is
       begin
@@ -162,6 +192,10 @@ package body ARM_Ada_Lang_IO is
       begin
          -- Close previous file (if exists)
          if Ada.Text_IO.Is_Open (Self.Current_File) then
+            if Self.Mergable_Paragraph then
+               End_Paragraph_Style (Self, Self.Current_Paragraph.Style);
+            end if;
+
             Ada.Text_IO.Close (Self.Current_File);
          end if;
       end Close_File;
@@ -173,7 +207,7 @@ package body ARM_Ada_Lang_IO is
          Header_Text : String)
       is
          Dir : constant String := Ada.Strings.Unbounded.To_String (Self.Output_Path) & Directory_For_Clause (Self, Clause_Number);
-      begin   
+      begin
          Close_File (Self);
 
          if not Ada.Directories.Exists (Dir) then
@@ -185,13 +219,15 @@ package body ARM_Ada_Lang_IO is
          Ada.Text_IO.Create (Self.Current_File, Ada.Text_IO.Out_File, Dir & File_Name);
 
          Make_New_Sidebar (Self);
-         
-         Detail.New_Line (Self);
-         Detail.Put_Line (Self, "# " & Clause_Number & " " & Header_Text);
-         Detail.New_Line (Self);
+
+         Put_Heading (Self, "# " & Clause_Number & " " & Header_Text);
 
          Print_Manual_Warning (Self);
          Include_React_Elements (Self);
+
+         Self.Mergable_Paragraph := False;
+         Self.Being_Merged := False;
+
       end Start_File;
 
       procedure Put (Self : in out Ada_Lang_IO_Output_Type; Char : Character) is
@@ -221,49 +257,6 @@ package body ARM_Ada_Lang_IO is
          pragma Unreferenced (Self);
          pragma Unreferenced (S);
       end Trace;
-
-      -- Outputs the current buffer in the current format.
-      procedure Flush (Self : in out Ada_Lang_IO_Output_Type) is
-      begin
-         if not (for all X in 1 .. Ada.Strings.Unbounded.Length (Self.Buffer)
-                  => Ada.Strings.Unbounded.Element (Self.Buffer, X) = ' ')
-         then
-            -- Ignore glossary definitions
-            if Ada.Strings.Unbounded.Index (Self.Buffer, "Version=") /= 1 then
-               case Self.Current_Paragraph.Style is
-                  when Code_Block_Style =>
-                     Detail.Put_Line (Self, "<CodeBlock>");
-                  when ARM_Output.Small
-                  | ARM_Output.Small_Wide_Above =>
-                     Detail.Put_Line (Self, "<Admonition "
-                        & "type=""aarm"""
-                        & " aarm=""" & Admonition_Output (Self.Admonition_Format).all & """"
-                        & " title=""" & Admonition_Texts (Self.Admonition_Format).all & """"
-                        & ">");
-                  when others =>
-                     Detail.Put (Self, "<p>");
-               end case;
-
-               Detail.Put (Self, Ada.Strings.Unbounded.To_String (Self.Buffer));
-
-               case Self.Current_Paragraph.Style is
-                  when Code_Block_Style =>
-                     Detail.New_Line (Self);
-                     Detail.Put_Line (Self, "</CodeBlock>");
-                  when ARM_Output.Small
-                  | ARM_Output.Small_Wide_Above => null;
-                     Detail.Put_Line (Self, "</Admonition>");
-                  when others =>
-                     Detail.Put_Line (Self, "</p>");
-               end case;
-
-               Detail.New_Line (Self);
-            end if;
-         end if;
-
-         Self.Buffer := Ada.Strings.Unbounded.Null_Unbounded_String;
-         Self.Admonition_Format := Note;
-      end Flush;
    end Detail;
 
    ----------------------------------------------------------------------------
@@ -327,6 +320,17 @@ package body ARM_Ada_Lang_IO is
       Detail.Trace (Self, "Number of columns: " & Number_of_Columns'Image);
    end Set_Columns;
 
+   function Is_Mergable_Paragraph (Style : ARM_Output.Paragraph_Style_Type) return Boolean is
+   begin
+      return Style in Code_Block_Style;
+   end Is_Mergable_Paragraph;
+
+   function Can_Merge_Paragraphs (Previous, Next : ARM_Output.Paragraph_Style_Type) return Boolean is
+      use type ARM_Output.Paragraph_Style_Type;
+   begin
+      return Is_Mergable_Paragraph(Previous) and then Previous = Next;
+   end Can_Merge_Paragraphs;
+
    -- Start a new paragraph. The style and indent of the paragraph is as
    -- specified. The (AA)RM paragraph number (which might include update
    -- and version numbers as well: [12.1/1]) is Number. If the format is
@@ -350,7 +354,7 @@ package body ARM_Ada_Lang_IO is
       Keep_with_Next : in Boolean := False;
       Space_After    : in ARM_Output.Space_After_Type := ARM_Output.Normal;
       Justification  : in ARM_Output.Justification_Type := ARM_Output.Default
-   ) is   
+   ) is
       New_Paragraph : constant Paragraph_Styling := (
          Style => Style,
          Indent => Indent,
@@ -365,7 +369,19 @@ package body ARM_Ada_Lang_IO is
    begin
       Detail.Trace (Self, "Start_Paragraph: " & Paragraph_To_String (New_Paragraph));
 
+      if Self.Mergable_Paragraph then
+         if Can_Merge_Paragraphs (Self.Current_Paragraph.Style, New_Paragraph.Style) then
+            Self.Being_Merged := True;
+         else
+            End_Paragraph_Style (Self, Self.Current_Paragraph.Style);
+            Self.Being_Merged := False;
+         end if;
+      else
+         Self.Being_Merged := False;
+      end if;
+
       Self.Current_Paragraph := New_Paragraph;
+      Self.Mergable_Paragraph := Is_Mergable_Paragraph (Self.Current_Paragraph.Style);
 
       Self.In_Block_Tag := Style in Code_Block_Style;
    end Start_Paragraph;
@@ -373,7 +389,44 @@ package body ARM_Ada_Lang_IO is
    procedure End_Paragraph (Self : in out Ada_Lang_IO_Output_Type) is
    begin
       Detail.Append (Self, Ada.Characters.Latin_1.LF);
-      Detail.Flush (Self);
+
+      -- Outputs the current buffer in the current format.
+      if not (for all X in 1 .. Ada.Strings.Unbounded.Length (Self.Buffer)
+               => Ada.Strings.Unbounded.Element (Self.Buffer, X) = ' ')
+      then
+         -- Ignore glossary definitions
+         if Ada.Strings.Unbounded.Index (Self.Buffer, "Version=") /= 1 then
+            if not Self.Being_Merged then
+               case Self.Current_Paragraph.Style is
+                  when Code_Block_Style =>
+                     Detail.Put_Line (Self, "<CodeBlock>");
+                  when ARM_Output.Small
+                  | ARM_Output.Small_Wide_Above =>
+                     Detail.Put_Line (Self, "<Admonition "
+                        & "type=""aarm"""
+                        & " aarm=""" & Admonition_Output (Self.Admonition_Format).all & """"
+                        & " title=""" & Admonition_Texts (Self.Admonition_Format).all & """"
+                        & ">");
+                  when others =>
+                     Detail.Put (Self, "<p>");
+               end case;
+            end if;
+
+            Detail.Put (Self, Ada.Strings.Unbounded.To_String (Self.Buffer));
+
+            if not Is_Mergable_Paragraph (Self.Current_Paragraph.Style) then
+               End_Paragraph_Style (Self, Self.Current_Paragraph.Style);
+            else
+               self.Mergable_Paragraph := True;
+            end if;
+
+            Detail.New_Line (Self);
+         end if;
+      end if;
+
+      Self.Buffer := Ada.Strings.Unbounded.Null_Unbounded_String;
+      Self.Admonition_Format := Note;
+
       Detail.Trace (Self, "End_Paragraph");
 
       Self.In_Block_Tag := False;
@@ -387,11 +440,9 @@ package body ARM_Ada_Lang_IO is
    procedure Category_Header (
       Self : in out Ada_Lang_IO_Output_Type;
       Header_Text : String
-   ) is 
+   ) is
    begin
-      Detail.New_Line (Self);
-      Detail.Put_Line (Self, "#### " & Header_Text);
-      Detail.New_Line (Self);
+      Put_Heading (Self, "#### " & Header_Text);
    end Category_Header;
 
    -- Output a Clause header. The level of the header is specified
@@ -430,13 +481,9 @@ package body ARM_Ada_Lang_IO is
          when ARM_Contents.Clause =>
             Detail.Start_File (Self, "AA-" & Clause_Number & ".mdx", Clause_Number, Header_Text);
          when ARM_Contents.Subclause =>
-            Detail.New_Line (Self);
-            Detail.Put_Line (Self, "## " & Clause_Number & "  " & Header_Text);
-            Detail.New_Line (Self);
+            Put_Heading (Self, "## " & Clause_Number & "  " & Header_Text);
          when ARM_Contents.Subsubclause =>
-            Detail.New_Line (Self);
-            Detail.Put_Line (Self, "### " & Clause_Number & "  " & Header_Text);
-            Detail.New_Line (Self);
+            Put_Heading (Self, "### " & Clause_Number & "  " & Header_Text);
          when others =>
             null;
       end case;
@@ -589,7 +636,7 @@ package body ARM_Ada_Lang_IO is
    begin
       -- Ignored since this is a web based format.
       pragma Unreferenced (Self);
-      --  Detail.Trace (Self, "Soft_Line_Break");      
+      --  Detail.Trace (Self, "Soft_Line_Break");
    end Soft_Line_Break;
 
    -- Output a soft line break, with a hyphen. This is a place (in the middle of
@@ -626,7 +673,7 @@ package body ARM_Ada_Lang_IO is
          when ARM_Output.Right_Quote => Ordinary_Character (Self, ''');
          when ARM_Output.Left_Quote => Ordinary_Character (Self, ''');
          when others => null;
-         
+
             --  EM_Dash, -- EM (very long) dash.
             --  EN_Dash, -- EN (long) dash
             --  GEQ, -- Greater than or equal symbol.
@@ -701,7 +748,7 @@ package body ARM_Ada_Lang_IO is
          -- at once.
          if Format /= Self.Current_Format then
             if Format.Font /= ARM_Output.Swiss and then Self.Current_Format.Font = ARM_Output.Swiss then
-               Detail.Append (Self, "</code>");  
+               Detail.Append (Self, "</code>");
             end if;
 
             if Format.Italic /= Self.Current_Format.Italic and then not Format.Italic then
@@ -721,7 +768,7 @@ package body ARM_Ada_Lang_IO is
             end if;
 
             if Format.Font = ARM_Output.Swiss and then Self.Current_Format.Font /= ARM_Output.Swiss then
-               Detail.Append (Self, "<code>");  
+               Detail.Append (Self, "<code>");
             end if;
          end if;
       end if;
@@ -745,7 +792,7 @@ package body ARM_Ada_Lang_IO is
       --  are used in the code samples...
       --
       --  Detail.Flush (Self);
-      
+
       Self.Current_Format := Format;
    end Text_Format;
 
@@ -852,7 +899,7 @@ package body ARM_Ada_Lang_IO is
       --  Detail.Trace (Self, "Text: " & Text);
       --  Detail.Trace (Self, "Target: " & Target);
 
-      Detail.Append (Self, 
+      Detail.Append (Self,
          "<a id=""" & Target & """>"
          & Text
          & "</a>");

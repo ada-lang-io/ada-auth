@@ -69,29 +69,6 @@ package body ARM_Ada_Lang_IO is
       Detail.New_Line (Self);
    end Include_React_Elements;
 
-   function Make_Clause_File_Name (
-      Self : in out Ada_Lang_IO_Output_Type;
-      Clause_Number : String) return String
-   is
-      Dot_Set : constant Ada.Strings.Maps.Character_Set := Ada.Strings.Maps.To_Set ('.');
-      Dot_Index : constant Natural := Ada.Strings.Fixed.Index (Clause_Number, Dot_Set);
-      Prepend : constant String := Directory_For_Clause (Ada.Strings.Unbounded.To_String (Self.File_Prefix), Clause_Number)
-         & Ada.Strings.Unbounded.To_String (Self.File_Prefix) & "-";
-   begin
-      if Dot_Index /= 0 then
-         declare
-            Sub_Dot_Index : constant Natural := Ada.Strings.Fixed.Index (Clause_Number, Dot_Set, From => Dot_Index + 1);
-         begin
-            return (if Sub_Dot_Index /= 0
-               then Prepend & Clause_Number (Clause_Number'First .. Sub_Dot_Index - 1)
-               else Prepend & Clause_Number
-            );
-         end;
-      else
-         return Prepend & Clause_Number;
-      end if;
-   end Make_Clause_File_Name;
-
    function Format_To_String (Format : ARM_Output.Format_Type) return String is
    begin
       return (
@@ -981,7 +958,7 @@ package body ARM_Ada_Lang_IO is
       --  Detail.Trace (Self, "Target: " & Target);
       --  Detail.Trace (Self, "Clause Number: " & Clause_Number);
 
-      Detail.Append (Self, Make_Link (Text, "../" & Make_Clause_File_Name (Self, Clause_Number) & "#" & Target, Self.In_Block_Tag));
+      Detail.Append (Self, Make_Link (Text, "../" & Make_Clause_File_Name (Ada.Strings.Unbounded.To_String (Self.File_Prefix), Clause_Number) & "#" & Target, Self.In_Block_Tag));
    end Local_Link;
 
    -- Generate a local link to the target and clause given.
@@ -1000,7 +977,7 @@ package body ARM_Ada_Lang_IO is
       --  Detail.Trace (Self, "Clause Number: " & Clause_Number);
 
       -- todo: start link
-      Detail.Append (Self, "<a href=""" & "../" & Make_Clause_File_Name (Self, Clause_Number) & "#" & Target & """>");
+      Detail.Append (Self, "<a href=""" & "../" & Make_Clause_File_Name (Ada.Strings.Unbounded.To_String (Self.File_Prefix), Clause_Number) & "#" & Target & """>");
    end Local_Link_Start;
 
    -- End a local link for the target and clause given.

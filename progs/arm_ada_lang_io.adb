@@ -68,22 +68,13 @@ package body ARM_Ada_Lang_IO is
       Detail.New_Line (Self);
    end Include_React_Elements;
 
-   function Directory_For_Clause (Self : in out Ada_Lang_IO_Output_Type; Clause_Number : String) return String is
-      Prefix : constant String := Ada.Strings.Unbounded.To_String (Self.File_Prefix);
-   begin
-      return (if Clause_Number /= ""
-         then Prefix & "-" & Find_Top_Level_Clause (Simplify_Clause_Number (Clause_Number))
-         else "")
-         & "/";
-   end Directory_For_Clause;
-
    function Make_Clause_File_Name (
       Self : in out Ada_Lang_IO_Output_Type;
       Clause_Number : String) return String
    is
       Dot_Set : constant Ada.Strings.Maps.Character_Set := Ada.Strings.Maps.To_Set ('.');
       Dot_Index : constant Natural := Ada.Strings.Fixed.Index (Clause_Number, Dot_Set);
-      Prepend : constant String := Directory_For_Clause (Self, Clause_Number)
+      Prepend : constant String := Directory_For_Clause (Ada.Strings.Unbounded.To_String (Self.File_Prefix), Clause_Number)
          & Ada.Strings.Unbounded.To_String (Self.File_Prefix) & "-";
    begin
       if Dot_Index /= 0 then
@@ -213,7 +204,7 @@ package body ARM_Ada_Lang_IO is
          Clause_Number : String;
          Header_Text : String)
       is
-         Dir : constant String := Ada.Strings.Unbounded.To_String (Self.Output_Path) & Directory_For_Clause (Self, Clause_Number);
+         Dir : constant String := Ada.Strings.Unbounded.To_String (Self.Output_Path) & Directory_For_Clause (Ada.Strings.Unbounded.To_String (Self.File_Prefix), Clause_Number);
       begin
          Close_File (Self);
 

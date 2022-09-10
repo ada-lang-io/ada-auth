@@ -1,5 +1,6 @@
 with Ada.Strings.Fixed;
 with Ada.Strings.Maps;
+with Ada.Text_IO;
 
 package body Formatter.Clauses is
 
@@ -36,6 +37,31 @@ package body Formatter.Clauses is
          & "/";
    end Directory_For_Clause;
 
+   function Make_Clause_File_Stem (
+      File_Prefix : String;
+      Clause_Number : String) return String
+   is
+      Dot_Set : constant Ada.Strings.Maps.Character_Set := Ada.Strings.Maps.To_Set ('.');
+      Dot_Index : constant Natural := Ada.Strings.Fixed.Index (Clause_Number, Dot_Set);
+      Prepend : constant String := File_Prefix & "-";
+   begin
+      if Dot_Index /= 0 then
+         declare
+            Sub_Dot_Index : constant Natural := Ada.Strings.Fixed.Index (Clause_Number, Dot_Set, From => Dot_Index + 1);
+         begin
+            return (if Sub_Dot_Index /= 0
+               then Prepend & Clause_Number (Clause_Number'First .. Sub_Dot_Index - 1)
+               else Prepend & Clause_Number
+            );
+         end;
+      else
+         return Prepend & Clause_Number;
+      end if;
+   end Make_Clause_File_Stem;
+
+   function Make_Clause_File_Name (File_Prefix : String; Clause_Number : String) return String
+   is (Directory_For_Clause (File_Prefix, Clause_Number) & Make_Clause_File_Stem (File_Prefix, Clause_Number));
+
 begin
 
    pragma Assert (Is_Top_Level_Clause ("1"));
@@ -57,6 +83,17 @@ begin
 
    pragma Assert (Directory_For_Clause ("AA", "A") = "AA-A/");
    pragma Assert (Directory_For_Clause ("AA", "1.2.3") = "AA-1/");
+   pragma Assert (Directory_For_Clause ("AA", "10.1") = "AA-10/");
+
+   Ada.Text_IO.Put_Line (Make_Clause_File_Stem ("AA", "1.2.3"));
+
+   pragma Assert (Make_Clause_File_Stem ("AA", "A") = "AA-A");
+   pragma Assert (Make_Clause_File_Stem ("AA", "10.1") = "AA-10.1");
+   pragma Assert (Make_Clause_File_Stem ("AA", "1.2.3") = "AA-1.2");
+
+   pragma Assert (make_Clause_File_Name ("AA", "A") = "AA-A/AA-A");
+   pragma Assert (make_Clause_File_Name ("AA", "10.1") = "AA-10/AA-10.1");
+   pragma Assert (make_Clause_File_Name ("AA", "1.2.3") = "AA-1/AA-1.2");
 
    null;
 

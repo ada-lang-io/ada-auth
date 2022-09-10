@@ -25,4 +25,25 @@ package body Formatter.Clauses is
          else Clause_Number);
    end Simplify_Clause_Number;
 
+begin
+
+   pragma Assert (Is_Top_Level_Clause ("1"));
+   pragma Assert (Is_Top_Level_Clause ("A"));
+   pragma Assert (Is_Top_Level_Clause ("TOC"));
+   pragma Assert (not Is_Top_Level_Clause ("1.2"));
+   pragma Assert (not Is_Top_Level_Clause ("1.2.3"));
+   pragma Assert (not Is_Top_Level_Clause ("A.1"));
+   pragma Assert (not Is_Top_Level_Clause ("A.1.2"));
+
+   pragma Assert (Find_Top_Level_Clause ("A") = "A");
+   pragma Assert (Find_Top_Level_Clause ("A.1") = "A");
+   pragma Assert (Find_Top_Level_Clause ("1.2") = "1");
+   pragma Assert (Find_Top_Level_Clause ("1.2.3.4") = "1");
+
+   pragma Assert (Simplify_Clause_Number ("Annex A") = "A");
+   pragma Assert (Simplify_Clause_Number ("TOC") = "TOC");
+   pragma Assert (Simplify_Clause_Number ("1.2") = "1.2");
+
+   null;
+
 end Formatter.Clauses;

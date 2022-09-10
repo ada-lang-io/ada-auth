@@ -25,6 +25,17 @@ package body Formatter.Clauses is
          else Clause_Number);
    end Simplify_Clause_Number;
 
+   function Directory_For_Clause (
+      File_Prefix : String;
+      Clause_Number : String)
+   return String is
+   begin
+      return (if Clause_Number /= ""
+         then File_Prefix & "-" & Find_Top_Level_Clause (Simplify_Clause_Number (Clause_Number))
+         else "")
+         & "/";
+   end Directory_For_Clause;
+
 begin
 
    pragma Assert (Is_Top_Level_Clause ("1"));
@@ -43,6 +54,9 @@ begin
    pragma Assert (Simplify_Clause_Number ("Annex A") = "A");
    pragma Assert (Simplify_Clause_Number ("TOC") = "TOC");
    pragma Assert (Simplify_Clause_Number ("1.2") = "1.2");
+
+   pragma Assert (Directory_For_Clause ("AA", "A") = "AA-A/");
+   pragma Assert (Directory_For_Clause ("AA", "1.2.3") = "AA-1/");
 
    null;
 

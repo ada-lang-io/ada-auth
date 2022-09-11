@@ -33,7 +33,7 @@ package body Formatter.Clauses is
    begin
       return (if Clause_Number /= ""
          then File_Prefix & "-" & Find_Top_Level_Clause (Simplify_Clause_Number (Clause_Number))
-         else "Top")
+         else File_Prefix & "-" & "0")
          & "/";
    end Directory_For_Clause;
 
@@ -85,7 +85,8 @@ package body Formatter.Clauses is
       Maybe_Target : constant String := Make_Clause_Anchor_Inner_Target (Clause_Number);
       Anchor_Name : constant String := (if Maybe_Target = "" then "" else "#" & Maybe_Target);
    begin
-      return "../" & Make_Clause_File_Name (File_Prefix, Clause_Number) & Anchor_Name;
+      return "../" & (if Maybe_Target = "" then Directory_For_Clause (File_Prefix, Clause_Number)
+         else Make_Clause_File_Name (File_Prefix, Clause_Number) & Anchor_Name);
    end Make_Clause_Anchor;
 
 begin

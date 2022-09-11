@@ -257,17 +257,12 @@ package body ARM_Ada_Lang_IO is
      Title : in String := "";
      Verbose : Boolean := True)
    is
+      Dir : constant String := Ada.Strings.Unbounded.To_String (Self.Output_Path) & Directory_For_Clause (Ada.Strings.Unbounded.To_String (Self.File_Prefix), "");
    begin
-      pragma Unreferenced (Title);
-
       Self.File_Prefix := Ada.Strings.Unbounded.To_Unbounded_String (File_Prefix);
       Self.Output_Path := Ada.Strings.Unbounded.To_Unbounded_String (Output_Path);
 
-      Ada.Text_IO.Create (Self.Current_File, Ada.Text_IO.Out_File, "Title.mdx");
-
-      Make_New_Sidebar (Self);
-
-      Print_Manual_Warning (Self);
+      Detail.Start_File (Self, File_Prefix & "-Title.mdx", "", Title);
 
       Self.Verbose := Verbose;
    end Create;
@@ -853,7 +848,7 @@ package body ARM_Ada_Lang_IO is
       -- Ignore this by consuming the buffer.
       --  Self.Buffer := Ada.Strings.Unbounded.Null_Unbounded_String;
 
-      Detail.Append (Self, Make_Link (Text, Make_Clause_Anchor (Ada.Strings.Unbounded.To_String (Self.File_Prefix), Clause_Number), Self.In_Block_Tag));
+      Detail.Append (Self, Make_Link (Text, Make_Clause_Anchor (Ada.Strings.Unbounded.To_String (Self.File_Prefix), Formatter.Clauses.Simplify_Clause_Number (Clause_Number)), Self.In_Block_Tag));
    end Clause_Reference;
 
    -- Generate a index target. This marks the location where an index

@@ -5,4 +5,6 @@ package Formatter.Clauses is
    function Directory_For_Clause (File_Prefix : String; Clause_Number : String) return String;
    function Make_Clause_File_Stem (File_Prefix : String; Clause_Number : String) return String;
    function Make_Clause_File_Name (File_Prefix : String; Clause_Number : String) return String;
+   function Make_Clause_Anchor_Inner_Target (Clause_Number : String) return String;
+   function Make_Clause_Anchor (File_Prefix : String; Clause_Number : String) return String;
 end Formatter.Clauses;

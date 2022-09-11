@@ -139,6 +139,16 @@ package body ARM_Ada_Lang_IO is
       Detail.New_Line (Self);
    end Put_Heading;
 
+   -- Make an id to jump to if there's an appropriate subclause which can be
+   -- jumped to
+   procedure Make_Clause_Target (Self : in out Ada_Lang_IO_Output_Type; Clause_Number : String) is
+      Anchor_Target : constant String := Make_Clause_Anchor_Inner_Target (Clause_Number);
+   begin
+      if Anchor_Target /= "" then
+         Detail.Anchor (Self, Anchor_Target, "");
+      end if;
+   end Make_Clause_Target;
+
    package body Detail is
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; Char : Character) is
       begin
@@ -481,8 +491,10 @@ package body ARM_Ada_Lang_IO is
          when ARM_Contents.Clause =>
             Detail.Start_File (Self, "AA-" & Clause_Number & ".mdx", Clause_Number, Header_Text);
          when ARM_Contents.Subclause =>
+            Make_Clause_Target (Self, Clause_Number);
             Put_Heading (Self, "## " & Clause_Number & "  " & Header_Text);
          when ARM_Contents.Subsubclause =>
+            Make_Clause_Target (Self, Clause_Number);
             Put_Heading (Self, "### " & Clause_Number & "  " & Header_Text);
          when others =>
             null;
@@ -843,8 +855,7 @@ package body ARM_Ada_Lang_IO is
       -- Ignore this by consuming the buffer.
       --  Self.Buffer := Ada.Strings.Unbounded.Null_Unbounded_String;
 
-      -- todo: make a link instead
-      Detail.Append (Self, Text);
+      Detail.Append (Self, Make_Link (Text, Make_Clause_Anchor (Ada.Strings.Unbounded.To_String (Self.File_Prefix), Clause_Number), Self.In_Block_Tag));
    end Clause_Reference;
 
    -- Generate a index target. This marks the location where an index

@@ -33,7 +33,7 @@ package body Formatter.Clauses is
    begin
       return (if Clause_Number /= ""
          then File_Prefix & "-" & Find_Top_Level_Clause (Simplify_Clause_Number (Clause_Number))
-         else "")
+         else "Top")
          & "/";
    end Directory_For_Clause;
 

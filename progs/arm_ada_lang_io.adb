@@ -34,7 +34,7 @@ package body ARM_Ada_Lang_IO is
    package Detail is
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; Char : Character);
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; S : String);
-      procedure Anchor (Self : in out Ada_Lang_IO_Output_Type; Target, Text : String);
+      function Anchor (Self : in out Ada_Lang_IO_Output_Type; Target, Text : String) return String;
       procedure Backspace (Self : in out Ada_Lang_IO_Output_Type; Count : Positive);
       procedure Start_File (Self : in out Ada_Lang_IO_Output_Type; File_Name : String; Clause_Number : String; Header_Text : String);
       procedure Put_Line (Self : in out Ada_Lang_IO_Output_Type; S : String);
@@ -145,7 +145,7 @@ package body ARM_Ada_Lang_IO is
       Anchor_Target : constant String := Make_Clause_Anchor_Inner_Target (Clause_Number);
    begin
       if Anchor_Target /= "" then
-         Detail.Anchor (Self, Anchor_Target, "");
+         Detail.Put_Line (Self, Detail.Anchor (Self, Anchor_Target, ""));
       end if;
    end Make_Clause_Target;
 
@@ -160,12 +160,10 @@ package body ARM_Ada_Lang_IO is
          Ada.Strings.Unbounded.Append (Self.Buffer, S);
       end Append;
 
-      procedure Anchor (Self : in out Ada_Lang_IO_Output_Type; Target, Text : String) is
+      function Anchor (Self : in out Ada_Lang_IO_Output_Type; Target, Text : String) return String is
       begin
-         Detail.Append (Self,
-            "<a id=""" & Target & """>"
-            & Text
-            & "</a>");
+         return "<a id=""" & Target & """>"
+            & Text & "</a>";
       end Anchor;
 
       procedure Backspace (Self : in out Ada_Lang_IO_Output_Type; Count : Positive) is
@@ -386,7 +384,7 @@ package body ARM_Ada_Lang_IO is
             if not Self.Being_Merged then
                case Self.Current_Paragraph.Style is
                   when Code_Block_Style =>
-                     Detail.Put_Line (Self, "<CodeBlock>");
+                     Detail.Put_Line (Self, "<CodeBlock language=""ada"">");
                   when ARM_Output.Small
                   | ARM_Output.Small_Wide_Above =>
                      Detail.Put_Line (Self, "<Admonition "
@@ -950,7 +948,7 @@ package body ARM_Ada_Lang_IO is
       --  Detail.Trace (Self, "Text: " & Text);
       --  Detail.Trace (Self, "Target: " & Target);
 
-      Detail.Anchor (Self, Target, Text);
+      Detail.Append (Self, Detail.Anchor (Self, Target, Text));
    end Local_Target;
 
    -- Generate a local link to the target and clause given.

@@ -64,8 +64,11 @@ package body ARM_Ada_Lang_IO is
    procedure Include_React_Elements (Self : in out Ada_Lang_IO_Output_Type) is
    begin
       Detail.New_Line (Self);
-      Detail.Put_Line (Self, "import CodeBlock from ""@theme/CodeBlock"";");
       Detail.Put_Line (Self, "import Admonition from ""@theme/Admonition"";");
+      Detail.Put_Line (Self, "import AnnotatedOnly from ""@site/src/components/AnnotatedOnly"";");
+      Detail.Put_Line (Self, "import CodeBlock from ""@theme/CodeBlock"";");
+      Detail.Put_Line (Self, "import MarginText from ""@site/src/components/MarginText"";");
+      Detail.Put_Line (Self, "import MarginInfo from ""@site/src/components/MarginInfo"";");
       Detail.New_Line (Self);
    end Include_React_Elements;
 
@@ -349,6 +352,14 @@ package body ARM_Ada_Lang_IO is
       );
    begin
       Detail.Trace (Self, "Start_Paragraph: " & Paragraph_To_String (New_Paragraph));
+
+      if Number /= "0" then
+         Detail.Put_Line (Self, "<AnnotatedOnly>");
+         Detail.Put_Line (Self, "<MarginText>");
+         Detail.Put_Line (Self, Number);
+         Detail.Put_Line (Self, "</MarginText>");
+         Detail.Put_Line (Self, "</AnnotatedOnly>");
+      end if;
 
       if Self.Mergable_Paragraph then
          if Can_Merge_Paragraphs (Self.Current_Paragraph.Style, New_Paragraph.Style) then

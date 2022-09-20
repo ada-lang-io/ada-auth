@@ -6,6 +6,7 @@ with Ada.Exceptions;
 with Ada.Strings.Fixed;
 with Ada.Strings.Maps;
 with Ada.Strings.Unbounded;
+with Ada.Strings.UTF_Encoding.Strings;
 with Ada.Characters.Latin_1;
 use Ada.Text_IO;
 
@@ -24,7 +25,7 @@ package body ARM_Ada_Lang_IO is
          when '{' => return JSX_Wrap ("{");
          when '}' => return JSX_Wrap ("}");
          when Ada.Characters.Latin_1.LF => return (if In_Block_Tag then JSX_Wrap ("\n") else "<br />"); -- (1 => Ada.Characters.Latin_1.LF));
-         when others => return (1 => Char);
+         when others => return Ada.Strings.UTF_Encoding.Strings.Encode ((1 => Char));
       end case;
    end Safe_Char;
 

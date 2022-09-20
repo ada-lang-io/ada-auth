@@ -777,6 +777,7 @@ package body ARM_Ada_Lang_IO is
    begin
       Detail.Trace (Self, "Unicode_Character");
       Detail.Trace (Self, "Char_Code: " & Char_Code);
+      Detail.Append (Self, "&#" & Char_Code(2..Char_Code'Length) & ';');
    end Unicode_Character;
 
    -- Marks the end of a hanging item. Call only once per paragraph.

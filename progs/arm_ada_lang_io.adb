@@ -547,15 +547,15 @@ package body ARM_Ada_Lang_IO is
    end Clause_Header;
 
    procedure Revised_Clause_Header
-     (Self : in out Ada_Lang_IO_Output_Type;
-      New_Header_Text : in String;
-      Old_Header_Text : in String;
-      Level : in ARM_Contents.Level_Type;
-      Clause_Number : in String;
-      Version : in ARM_Contents.Change_Version_Type;
-      Old_Version : in ARM_Contents.Change_Version_Type;
+     (Self                       : in out Ada_Lang_IO_Output_Type;
+      New_Header_Text            : in String;
+      Old_Header_Text            : in String;
+      Level                      : in ARM_Contents.Level_Type;
+      Clause_Number              : in String;
+      Version                    : in ARM_Contents.Change_Version_Type;
+      Old_Version                : in ARM_Contents.Change_Version_Type;
       Top_Level_Subdivision_Name : in ARM_Output.Top_Level_Subdivision_Name_Kind;
-      No_Page_Break : in Boolean := False) is
+      No_Page_Break              : in Boolean := False) is
    begin
       Debugging.Trace (Self, "Revised_Clause_Header");
       Debugging.Trace (Self, "Old header text: " & Old_Header_Text);

@@ -36,6 +36,13 @@ package body ARM_Ada_Lang_IO is
       return "<a id=""" & Target & """>" & Text & "</a>";
    end Anchor;
 
+   function Make_Link (Name : String; Target : String; In_Block_Tag : Boolean) return String is
+   begin
+      return "<a href=""" & Target & """" & ">" & Name & "</a>";
+   end Make_Link;
+
+   ----------------------------------------------------------------------------
+
    package Paragraph_Buffer is
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; Char : Character);
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; S : String);
@@ -60,47 +67,51 @@ package body ARM_Ada_Lang_IO is
       end Backspace;
    end Paragraph_Buffer;
 
-   package Detail is
+   ----------------------------------------------------------------------------
+
+   package Immediate is
       procedure Put_Line (Self : in out Ada_Lang_IO_Output_Type; S : String);
       procedure Put (Self : in out Ada_Lang_IO_Output_Type; Char : Character);
       procedure Put (Self : in out Ada_Lang_IO_Output_Type; S : String);
       procedure New_Line (Self : in out Ada_Lang_IO_Output_Type; Count : Ada.Text_IO.Positive_Count := 1);
+   end Immediate;
 
-      -- Debugging element.
-      procedure Trace (Self : in out Ada_Lang_IO_Output_Type; S : String);
-   end Detail;
+   ----------------------------------------------------------------------------
 
    procedure Make_New_Sidebar (Self : in out Ada_Lang_IO_Output_Type) is
    begin
-      Detail.Put_Line (Self, "---");
-      Detail.Put_Line (Self, "sidebar_position: " & Self.Next_Sidebar_Position'Image);
-      Detail.Put_Line (Self, "---");
+      Immediate.Put_Line (Self, "---");
+      Immediate.Put_Line (Self, "sidebar_position: " & Self.Next_Sidebar_Position'Image);
+      Immediate.Put_Line (Self, "---");
       Self.Next_Sidebar_Position := Self.Next_Sidebar_Position + 1;
    end Make_New_Sidebar;
 
    procedure Print_Manual_Warning (Self : in out Ada_Lang_IO_Output_Type) is
    begin
-      Detail.Put_Line (Self, ":::warning");
-      Detail.Put_Line (Self, "This Reference Manual output has not been verified,");
-      Detail.Put_Line (Self, "and may contain omissions or errors.");
-      Detail.Put_Line (Self, "Report any problems on the [tracking issue](https://github.com/ada-lang-io/ada-lang-io/issues/20)");
-      Detail.Put_Line (Self, ":::");
+      Immediate.Put_Line (Self, ":::warning");
+      Immediate.Put_Line (Self, "This Reference Manual output has not been verified,");
+      Immediate.Put_Line (Self, "and may contain omissions or errors.");
+      Immediate.Put_Line (Self, "Report any problems on the [tracking issue](https://github.com/ada-lang-io/ada-lang-io/issues/20)");
+      Immediate.Put_Line (Self, ":::");
    end Print_Manual_Warning;
 
    procedure Include_React_Elements (Self : in out Ada_Lang_IO_Output_Type) is
    begin
-      Detail.New_Line (Self);
-      Detail.Put_Line (Self, "import Admonition from ""@theme/Admonition"";");
-      Detail.Put_Line (Self, "import AnnotatedOnly from ""@site/src/components/AnnotatedOnly"";");
-      Detail.Put_Line (Self, "import CodeBlock from ""@theme/CodeBlock"";");
-      Detail.Put_Line (Self, "import MarginText from ""@site/src/components/MarginText"";");
-      Detail.Put_Line (Self, "import MarginInfo from ""@site/src/components/MarginInfo"";");
-      Detail.New_Line (Self);
+      Immediate.New_Line (Self);
+      Immediate.Put_Line (Self, "import Admonition from ""@theme/Admonition"";");
+      Immediate.Put_Line (Self, "import AnnotatedOnly from ""@site/src/components/AnnotatedOnly"";");
+      Immediate.Put_Line (Self, "import CodeBlock from ""@theme/CodeBlock"";");
+      Immediate.Put_Line (Self, "import MarginText from ""@site/src/components/MarginText"";");
+      Immediate.Put_Line (Self, "import MarginInfo from ""@site/src/components/MarginInfo"";");
+      Immediate.New_Line (Self);
    end Include_React_Elements;
+
+   ----------------------------------------------------------------------------
 
    package Debugging is
       function Format_To_String (Format : ARM_Output.Format_Type) return String;
       function Paragraph_To_String (Paragraph : Paragraph_Styling) return String;
+      procedure Trace (Self : in out Ada_Lang_IO_Output_Type; S : String);
    end Debugging;
 
    package body Debugging is
@@ -128,12 +139,16 @@ package body ARM_Ada_Lang_IO is
             & " " & Paragraph.Justification'Image
          );
       end Paragraph_To_String;
+
+      procedure Trace (Self : in out Ada_Lang_IO_Output_Type; S : String) is
+      begin
+         --  Put_Line (Self, "@@@ " & S);
+         pragma Unreferenced (Self);
+         pragma Unreferenced (S);
+      end Trace;
    end Debugging;
 
-   function Make_Link (Name : String; Target : String; In_Block_Tag : Boolean) return String is
-   begin
-      return "<a href=""" & Target & """" & ">" & Name & "</a>";
-   end Make_Link;
+   ----------------------------------------------------------------------------
 
    procedure End_Paragraph_Style (
       Self : in out Ada_Lang_IO_Output_Type;
@@ -141,21 +156,21 @@ package body ARM_Ada_Lang_IO is
    begin
       case Style is
          when Code_Block_Style =>
-            Detail.New_Line (Self);
-            Detail.Put_Line (Self, "</CodeBlock>");
+            Immediate.New_Line (Self);
+            Immediate.Put_Line (Self, "</CodeBlock>");
          when ARM_Output.Small
          | ARM_Output.Small_Wide_Above =>
-            Detail.Put_Line (Self, "</Admonition>");
+            Immediate.Put_Line (Self, "</Admonition>");
          when ARM_Output.Text_Prefixed_Style_Subtype =>
-            Detail.Put_Line (Self, "</dl>");
+            Immediate.Put_Line (Self, "</dl>");
          when ARM_Output.Bullet_Prefixed_Style_Subtype =>
-            Detail.Put_Line (Self, "</ul>");
+            Immediate.Put_Line (Self, "</ul>");
          when others =>
             if Ada.Strings.Unbounded.Index (Self.Buffer, "::=") /= 0 then
-               Detail.New_Line (Self);
-               Detail.Put_Line (Self, "</CodeBlock>");
+               Immediate.New_Line (Self);
+               Immediate.Put_Line (Self, "</CodeBlock>");
             else
-               Detail.Put_Line (Self, "</p>");
+               Immediate.Put_Line (Self, "</p>");
             end if;
       end case;
 
@@ -170,9 +185,9 @@ package body ARM_Ada_Lang_IO is
          End_Paragraph_Style (Self, Self.Current_Paragraph.Style);
       end if;
 
-      Detail.New_Line (Self);
-      Detail.Put_Line (Self, S);
-      Detail.New_Line (Self);
+      Immediate.New_Line (Self);
+      Immediate.Put_Line (Self, S);
+      Immediate.New_Line (Self);
    end Put_Heading;
 
    -- Make an id to jump to if there's an appropriate subclause which can be
@@ -181,11 +196,13 @@ package body ARM_Ada_Lang_IO is
       Anchor_Target : constant String := Make_Clause_Anchor_Inner_Target (Clause_Number);
    begin
       if Anchor_Target /= "" then
-         Detail.Put_Line (Self, Anchor (Anchor_Target, ""));
+         Immediate.Put_Line (Self, Anchor (Anchor_Target, ""));
       end if;
    end Make_Clause_Target;
 
-   package body Detail is
+   ----------------------------------------------------------------------------
+
+   package body Immediate is
       -- Direct output
 
       procedure Put (Self : in out Ada_Lang_IO_Output_Type; Char : Character) is
@@ -208,14 +225,9 @@ package body ARM_Ada_Lang_IO is
       begin
          New_Line (Self.Current_File, Count);
       end New_Line;
+   end Immediate;
 
-      procedure Trace (Self : in out Ada_Lang_IO_Output_Type; S : String) is
-      begin
-         --  Put_Line (Self, "@@@ " & S);
-         pragma Unreferenced (Self);
-         pragma Unreferenced (S);
-      end Trace;
-   end Detail;
+   ----------------------------------------------------------------------------
 
    package Files is
       procedure Start_File (
@@ -238,7 +250,7 @@ package body ARM_Ada_Lang_IO is
          Close_File (Self);
 
          if not Ada.Directories.Exists (Dir) then
-            Detail.Trace (Self, "Creating new directory: " & Dir);
+            Debugging.Trace (Self, "Creating new directory: " & Dir);
             Ada.Directories.Create_Path (Dir);
          end if;
 
@@ -309,9 +321,9 @@ package body ARM_Ada_Lang_IO is
       Section_Name  : in String
    ) is
    begin
-      Detail.Trace (Self, "Section");
-      Detail.Trace (Self, "Section Title: " & Section_Title);
-      Detail.Trace (Self, "Section Name:" & Section_Name);
+      Debugging.Trace (Self, "Section");
+      Debugging.Trace (Self, "Section Title: " & Section_Title);
+      Debugging.Trace (Self, "Section Name:" & Section_Name);
       null;
    end Section;
 
@@ -321,8 +333,8 @@ package body ARM_Ada_Lang_IO is
       Number_of_Columns : in ARM_Output.Column_Count
    ) is
    begin
-      Detail.Trace (Self, "Set_Columns");
-      Detail.Trace (Self, "Number of columns: " & Number_of_Columns'Image);
+      Debugging.Trace (Self, "Set_Columns");
+      Debugging.Trace (Self, "Number of columns: " & Number_of_Columns'Image);
    end Set_Columns;
 
    function Is_Mergable_Paragraph (Style : ARM_Output.Paragraph_Style_Type) return Boolean is
@@ -374,14 +386,14 @@ package body ARM_Ada_Lang_IO is
          Justification => Justification
       );
    begin
-      Detail.Trace (Self, "Start_Paragraph: " & Debugging.Paragraph_To_String (New_Paragraph));
+      Debugging.Trace (Self, "Start_Paragraph: " & Debugging.Paragraph_To_String (New_Paragraph));
 
       if Number /= "0" then
-         Detail.Put_Line (Self, "<AnnotatedOnly>");
-         Detail.Put_Line (Self, "<MarginText>");
-         Detail.Put_Line (Self, Number);
-         Detail.Put_Line (Self, "</MarginText>");
-         Detail.Put_Line (Self, "</AnnotatedOnly>");
+         Immediate.Put_Line (Self, "<AnnotatedOnly>");
+         Immediate.Put_Line (Self, "<MarginText>");
+         Immediate.Put_Line (Self, Number);
+         Immediate.Put_Line (Self, "</MarginText>");
+         Immediate.Put_Line (Self, "</AnnotatedOnly>");
       end if;
 
       if Self.Mergable_Paragraph then
@@ -413,42 +425,42 @@ package body ARM_Ada_Lang_IO is
             if not Self.Being_Merged then
                case Self.Current_Paragraph.Style is
                   when Code_Block_Style =>
-                     Detail.Put_Line (Self, "<CodeBlock language=""ada"">");
+                     Immediate.Put_Line (Self, "<CodeBlock language=""ada"">");
                   when ARM_Output.Small
                   | ARM_Output.Small_Wide_Above =>
-                     Detail.Put_Line (Self, "<Admonition "
+                     Immediate.Put_Line (Self, "<Admonition "
                         & "type=""aarm"""
                         & " aarm=""" & Admonition_Output (Self.Admonition_Format).all & """"
                         & " title=""" & Admonition_Texts (Self.Admonition_Format).all & """"
                         & ">");
                   when ARM_Output.Text_Prefixed_Style_Subtype =>
-                     Detail.Put_Line (Self, "<dl>");
+                     Immediate.Put_Line (Self, "<dl>");
                   when ARM_Output.Bullet_Prefixed_Style_Subtype =>
-                     Detail.Put_Line (Self, "<ul>");
+                     Immediate.Put_Line (Self, "<ul>");
                   when others =>
                      if Ada.Strings.Unbounded.Index (Self.Buffer, "::=") /= 0 then
-                        Detail.New_Line (Self);
-                        Detail.Put_Line (Self, "<CodeBlock>");
+                        Immediate.New_Line (Self);
+                        Immediate.Put_Line (Self, "<CodeBlock>");
                         Self.Current_Paragraph.Style := ARM_Output.Examples;
                         Self.Mergable_Paragraph := Is_Mergable_Paragraph (Self.Current_Paragraph.Style);
                         Self.In_Block_Tag := Self.Current_Paragraph.Style in Code_Block_Style;
                      else
-                        Detail.Put (Self, "<p>");
+                        Immediate.Put (Self, "<p>");
                      end if;
                end case;
             end if;
 
             case Self.Current_Paragraph.Style is
                when ARM_Output.Text_Prefixed_Style_Subtype =>
-                  Detail.Put (Self, "<dd>");
-                  Detail.Put (Self, Ada.Strings.Unbounded.To_String (Self.Buffer));
-                  Detail.Put (Self, "</dd>");
+                  Immediate.Put (Self, "<dd>");
+                  Immediate.Put (Self, Ada.Strings.Unbounded.To_String (Self.Buffer));
+                  Immediate.Put (Self, "</dd>");
                when ARM_Output.Bullet_Prefixed_Style_Subtype =>
-                  Detail.Put (Self, "<li>");
-                  Detail.Put (Self, Ada.Strings.Unbounded.To_String (Self.Buffer));
-                  Detail.Put (Self, "</li>");
+                  Immediate.Put (Self, "<li>");
+                  Immediate.Put (Self, Ada.Strings.Unbounded.To_String (Self.Buffer));
+                  Immediate.Put (Self, "</li>");
                when others =>
-                  Detail.Put (Self, Ada.Strings.Unbounded.To_String (Self.Buffer));
+                  Immediate.Put (Self, Ada.Strings.Unbounded.To_String (Self.Buffer));
             end case;
 
             if not Is_Mergable_Paragraph (Self.Current_Paragraph.Style) then
@@ -457,14 +469,14 @@ package body ARM_Ada_Lang_IO is
                self.Mergable_Paragraph := True;
             end if;
 
-            Detail.New_Line (Self);
+            Immediate.New_Line (Self);
          end if;
       end if;
 
       Self.Buffer := Ada.Strings.Unbounded.Null_Unbounded_String;
       Self.Admonition_Format := Note;
 
-      Detail.Trace (Self, "End_Paragraph");
+      Debugging.Trace (Self, "End_Paragraph");
 
       Self.In_Block_Tag := False;
    end End_Paragraph;
@@ -539,11 +551,11 @@ package body ARM_Ada_Lang_IO is
       Top_Level_Subdivision_Name : in ARM_Output.Top_Level_Subdivision_Name_Kind;
       No_Page_Break : in Boolean := False) is
    begin
-      Detail.Trace (Self, "Revised_Clause_Header");
-      Detail.Trace (Self, "Old header text: " & Old_Header_Text);
-      Detail.Trace (Self, "Clause Number: " & Clause_Number);
-      Detail.Trace (Self, "Old Version: " & Old_Version'Image);
-      Detail.Trace (Self, "Top Level Subdivision Name" & Top_Level_Subdivision_Name'Image);
+      Debugging.Trace (Self, "Revised_Clause_Header");
+      Debugging.Trace (Self, "Old header text: " & Old_Header_Text);
+      Debugging.Trace (Self, "Clause Number: " & Clause_Number);
+      Debugging.Trace (Self, "Old Version: " & Old_Version'Image);
+      Debugging.Trace (Self, "Top Level Subdivision Name" & Top_Level_Subdivision_Name'Image);
 
       Clause_Header (Self, New_Header_Text, Level, Clause_Number, Top_Level_Subdivision_Name, No_Page_Break);
    end Revised_Clause_Header;
@@ -581,12 +593,12 @@ package body ARM_Ada_Lang_IO is
       Header_Kind        : in ARM_Output.Header_Kind_Type)
    is
    begin
-      Detail.Trace (Self, "Start_Table");
-      Detail.Trace (Self, "Columns: " & Columns'Image);
-      Detail.Trace (Self, "First Column Width: " & First_Column_Width'Image);
-      Detail.Trace (Self, "Last Column Width:  " & Last_Column_Width'Image);
-      Detail.Trace (Self, "Alignment:          " & Alignment'Image);
-      Detail.Trace (Self, "Header kind:        " & Header_Kind'Image);
+      Debugging.Trace (Self, "Start_Table");
+      Debugging.Trace (Self, "Columns: " & Columns'Image);
+      Debugging.Trace (Self, "First Column Width: " & First_Column_Width'Image);
+      Debugging.Trace (Self, "Last Column Width:  " & Last_Column_Width'Image);
+      Debugging.Trace (Self, "Alignment:          " & Alignment'Image);
+      Debugging.Trace (Self, "Header kind:        " & Header_Kind'Image);
    end Start_Table;
 
    procedure Table_Marker (
@@ -594,8 +606,8 @@ package body ARM_Ada_Lang_IO is
       Marker : in ARM_Output.Table_Marker_Type
    ) is
    begin
-      Detail.Trace (Self, "Table_Marker");
-      Detail.Trace (Self, "Marker: " & Marker'Image);
+      Debugging.Trace (Self, "Table_Marker");
+      Debugging.Trace (Self, "Marker: " & Marker'Image);
    end Table_Marker;
 
    -- Output a separator line. It is thin if "Is_Thin" is true.
@@ -604,7 +616,7 @@ package body ARM_Ada_Lang_IO is
      (Self : in out Ada_Lang_IO_Output_Type; Is_Thin : Boolean := True)
    is
    begin
-      Detail.Trace (Self, "Separator_Line");
+      Debugging.Trace (Self, "Separator_Line");
       Self.Last_Was_AI_Reference := False;
    end Separator_Line;
 
@@ -617,9 +629,9 @@ package body ARM_Ada_Lang_IO is
    is
       use type Ada.Strings.Unbounded.Unbounded_String;
    begin
-      --  Detail.Trace (Self, "Ordinary_Text");
-      --  Detail.Trace (Self, "Text: " & Text);
-      --  Detail.Put_Line (Self, Text);
+      --  Debugging.Trace (Self, "Ordinary_Text");
+      --  Debugging.Trace (Self, "Text: " & Text);
+      --  Immediate.Put_Line (Self, Text);
       --  If this isn't an admonition, then output it.
       Self.Last_Was_AI_Reference := False;
 
@@ -639,8 +651,8 @@ package body ARM_Ada_Lang_IO is
      (Self : in out Ada_Lang_IO_Output_Type; Char : in Character)
    is
    begin
-      --  Detail.Trace (Self, "Ordinary_Character");
-      --  Detail.Trace (Self, "Char: " & Char'Image);
+      --  Debugging.Trace (Self, "Ordinary_Character");
+      --  Debugging.Trace (Self, "Char: " & Char'Image);
       if not (Char = '}' or else Char = ' ' or else Char = '{' or else Char = Ada.Characters.Latin_1.LF)
          and then Self.Last_Was_AI_Reference and then Self.Current_Paragraph.Style not in Code_Block_Style
       then
@@ -662,7 +674,7 @@ package body ARM_Ada_Lang_IO is
    procedure Hard_Space (Self : in out Ada_Lang_IO_Output_Type) is
    begin
       -- Just treat as a space.
-      --  Detail.Trace (Self, "Hard_Space");
+      --  Debugging.Trace (Self, "Hard_Space");
       Ordinary_Character (Self, ' ');
       Self.Last_Was_AI_Reference := False;
    end Hard_Space;
@@ -671,8 +683,8 @@ package body ARM_Ada_Lang_IO is
    -- This corresponds to a "<BR>" in HTML.
    procedure Line_Break (Self : in out Ada_Lang_IO_Output_Type) is
    begin
-      --  Detail.Trace (Self, "Line_Break");
-      --  Detail.New_Line (Self, 1);
+      --  Debugging.Trace (Self, "Line_Break");
+      --  Immediate.New_Line (Self, 1);
       Ordinary_Character (Self, Ada.Characters.Latin_1.LF);
       Self.Last_Was_AI_Reference := False;
    end Line_Break;
@@ -688,7 +700,7 @@ package body ARM_Ada_Lang_IO is
    begin
       pragma Unreferenced (Self);
       pragma Unreferenced (Clear_Keep_with_Next);
-      --  Detail.Trace (Self, "Index_Line_Break");
+      --  Debugging.Trace (Self, "Index_Line_Break");
    end Index_Line_Break;
 
    -- Output a soft line break. This is a place (in the middle of a
@@ -698,7 +710,7 @@ package body ARM_Ada_Lang_IO is
    begin
       -- Ignored since this is a web based format.
       pragma Unreferenced (Self);
-      --  Detail.Trace (Self, "Soft_Line_Break");
+      --  Debugging.Trace (Self, "Soft_Line_Break");
    end Soft_Line_Break;
 
    -- Output a soft line break, with a hyphen. This is a place (in the middle of
@@ -708,7 +720,7 @@ package body ARM_Ada_Lang_IO is
    begin
       -- Soft hyphens are ignored.
       pragma Unreferenced (Self);
-      --  Detail.Trace (Self, "Soft_Hyphen_Break");
+      --  Debugging.Trace (Self, "Soft_Hyphen_Break");
    end Soft_Hyphen_Break;
 
    -- Output a tab, inserting space up to the next tab stop.
@@ -717,7 +729,7 @@ package body ARM_Ada_Lang_IO is
    procedure Tab (Self : in out Ada_Lang_IO_Output_Type) is
    begin
       Ordinary_Character (Self, Ada.Characters.Latin_1.HT);
-      --  Detail.Trace (Self, "Tab");
+      --  Debugging.Trace (Self, "Tab");
    end Tab;
 
    -- Output an special character.
@@ -726,8 +738,8 @@ package body ARM_Ada_Lang_IO is
       Char : in ARM_Output.Special_Character_Type)
    is
    begin
-      --  Detail.Trace (Self, "Special_Character");
-      --  Detail.Trace (Self, "Char: " & Char'Image);
+      --  Debugging.Trace (Self, "Special_Character");
+      --  Debugging.Trace (Self, "Char: " & Char'Image);
       case Char is
          when ARM_Output.EM_Dash => Ordinary_Character (Self, '-');
          when ARM_Output.Left_Double_Quote => Ordinary_Character (Self, '"');
@@ -736,7 +748,6 @@ package body ARM_Ada_Lang_IO is
          when ARM_Output.Left_Quote => Ordinary_Character (Self, ''');
          when others => null;
 
-            --  EM_Dash, -- EM (very long) dash.
             --  EN_Dash, -- EN (long) dash
             --  GEQ, -- Greater than or equal symbol.
             --  LEQ, -- Less than or equal symbol.
@@ -762,9 +773,9 @@ package body ARM_Ada_Lang_IO is
    is
       Char_Code : constant String := ARM_Output.Unicode_Type'Image (Char);
    begin
-      Detail.Trace (Self, "Unicode_Character");
-      Detail.Trace (Self, "Char_Code: " & Char_Code);
-      Detail.Append (Self, "&#" & Char_Code(2..Char_Code'Length) & ';');
+      Debugging.Trace (Self, "Unicode_Character");
+      Debugging.Trace (Self, "Char_Code: " & Char_Code);
+      Paragraph_Buffer.Append (Self, "&#" & Char_Code(2..Char_Code'Length) & ';');
    end Unicode_Character;
 
    -- Marks the end of a hanging item. Call only once per paragraph.
@@ -774,8 +785,8 @@ package body ARM_Ada_Lang_IO is
    -- with No_Prefix = True.
    procedure End_Hang_Item (Self : in out Ada_Lang_IO_Output_Type) is
    begin
-      Detail.Trace (Self, "End_Hang_Item");
-      Detail.Put_Line (Self, "<dt><br/>" & Ada.Strings.Unbounded.To_String (Self.Buffer) & "</dt>");
+      Debugging.Trace (Self, "End_Hang_Item");
+      Immediate.Put_Line (Self, "<dt><br/>" & Ada.Strings.Unbounded.To_String (Self.Buffer) & "</dt>");
       Self.Buffer := Ada.Strings.Unbounded.Null_Unbounded_String;
    end End_Hang_Item;
 
@@ -843,25 +854,25 @@ package body ARM_Ada_Lang_IO is
          end if;
       end if;
 
-      --  Detail.Trace (Self, "Text_Format");
-      --  Detail.Trace (Self, "Format: ");
-      --  Detail.Trace (Self, "Bold: " & Format.Bold'Image, 2);
-      --  Detail.Trace (Self, "Italic: " & Format.Italic'Image, 2);
-      --  Detail.Trace (Self, "Font: " & Format.Font'Image, 2);
-      --  Detail.Trace (Self, "Size: " & Format.Size'Image, 2);
-      --  Detail.Trace (Self, "Color: " & Format.Color'Image, 2);
-      --  Detail.Trace (Self, "Change: " & Format.Change'Image, 2);
-      --  Detail.Trace (Self, "Version: " & Format.Version'Image, 2);
-      --  Detail.Trace (Self, "Added_Version: " & Format.Added_Version'Image, 2);
-      --  Detail.Trace (Self, "Location: " & Format.Location'Image, 2);
+      --  Debugging.Trace (Self, "Text_Format");
+      --  Debugging.Trace (Self, "Format: ");
+      --  Debugging.Trace (Self, "Bold: " & Format.Bold'Image, 2);
+      --  Debugging.Trace (Self, "Italic: " & Format.Italic'Image, 2);
+      --  Debugging.Trace (Self, "Font: " & Format.Font'Image, 2);
+      --  Debugging.Trace (Self, "Size: " & Format.Size'Image, 2);
+      --  Debugging.Trace (Self, "Color: " & Format.Color'Image, 2);
+      --  Debugging.Trace (Self, "Change: " & Format.Change'Image, 2);
+      --  Debugging.Trace (Self, "Version: " & Format.Version'Image, 2);
+      --  Debugging.Trace (Self, "Added_Version: " & Format.Added_Version'Image, 2);
+      --  Debugging.Trace (Self, "Location: " & Format.Location'Image, 2);
 
-      --  Detail.Trace (Self, Format_To_String (Format));
+      --  Debugging.Trace (Self, Format_To_String (Format));
 
       --  Should flush the last bit since the last text format change...
       --  but only when NOT writing code samples, since text formats
       --  are used in the code samples...
       --
-      --  Detail.Flush (Self);
+      --  Immediate.Flush (Self);
 
       Self.Current_Format := Format;
    end Text_Format;
@@ -876,8 +887,8 @@ package body ARM_Ada_Lang_IO is
       Clause_Number : in String
    ) is
    begin
-      --  Detail.Trace (Self, "Clause_Reference");
-      --  Detail.Trace (Self, "Clause Number: " & Clause_Number);
+      --  Debugging.Trace (Self, "Clause_Reference");
+      --  Debugging.Trace (Self, "Clause Number: " & Clause_Number);
 
       -- Ignore this by consuming the buffer.
       --  Self.Buffer := Ada.Strings.Unbounded.Null_Unbounded_String;
@@ -895,8 +906,8 @@ package body ARM_Ada_Lang_IO is
    begin
       pragma Unreferenced (Self);
       pragma Unreferenced (Index_Key);
-      --  Detail.Trace (Self, "Index_Target");
-      --  Detail.Trace (Self, "Index Key: " & Index_Key'Image);
+      --  Debugging.Trace (Self, "Index_Target");
+      --  Debugging.Trace (Self, "Index Key: " & Index_Key'Image);
    end Index_Target;
 
    -- Generate a reference to an index target in the standard. The text
@@ -913,9 +924,9 @@ package body ARM_Ada_Lang_IO is
       pragma Unreferenced (Index_Key);
       pragma Unreferenced (Clause_Number);
 
-      --  Detail.Trace (Self, "Index_Reference");
-      --  Detail.Trace (Self, "Text: " & Text);
-      --  Detail.Trace (Self, "Index_Key: " & Index_Key'Image);
+      --  Debugging.Trace (Self, "Index_Reference");
+      --  Debugging.Trace (Self, "Text: " & Text);
+      --  Debugging.Trace (Self, "Index_Key: " & Index_Key'Image);
 
       Paragraph_Buffer.Append (Self, Text);
    end Index_Reference;
@@ -932,8 +943,8 @@ package body ARM_Ada_Lang_IO is
       DR_Number : in String)
    is
    begin
-      --  Detail.Trace (Self, "DR_Reference");
-      --  Detail.Trace (Self, "DR Number: " & DR_Number);
+      --  Debugging.Trace (Self, "DR_Reference");
+      --  Debugging.Trace (Self, "DR Number: " & DR_Number);
 
       Paragraph_Buffer.Append (Self, Text);
    end DR_Reference;
@@ -947,9 +958,9 @@ package body ARM_Ada_Lang_IO is
       Text : in String;
       AI_Number : in String)
    is begin
-      --  Detail.Trace (Self, "AI_Reference");
-      --  Detail.Trace (Self, "Text: " & Text);
-      --  Detail.Trace (Self, "AI_Number: " & AI_Number);
+      --  Debugging.Trace (Self, "AI_Reference");
+      --  Debugging.Trace (Self, "Text: " & Text);
+      --  Debugging.Trace (Self, "AI_Number: " & AI_Number);
       --  Paragraph_Buffer.Append (Self, (if Self.In_Block_Tag then JSX_Wrap (Text) else Text));
 
       if Self.Current_Paragraph.Style in Code_Block_Style then
@@ -973,9 +984,9 @@ package body ARM_Ada_Lang_IO is
       Target : in String)
    is
    begin
-      --  Detail.Trace (Self, "Local_Target");
-      --  Detail.Trace (Self, "Text: " & Text);
-      --  Detail.Trace (Self, "Target: " & Target);
+      --  Debugging.Trace (Self, "Local_Target");
+      --  Debugging.Trace (Self, "Text: " & Text);
+      --  Debugging.Trace (Self, "Target: " & Target);
 
       Paragraph_Buffer.Append (Self, Anchor (Target, Text));
    end Local_Target;
@@ -991,10 +1002,10 @@ package body ARM_Ada_Lang_IO is
       Clause_Number : in String)
    is
    begin
-      --  Detail.Trace (Self, "Local_Link");
-      --  Detail.Trace (Self, "Text: " & Text);
-      --  Detail.Trace (Self, "Target: " & Target);
-      --  Detail.Trace (Self, "Clause Number: " & Clause_Number);
+      --  Debugging.Trace (Self, "Local_Link");
+      --  Debugging.Trace (Self, "Text: " & Text);
+      --  Debugging.Trace (Self, "Target: " & Target);
+      --  Debugging.Trace (Self, "Clause Number: " & Clause_Number);
 
       Paragraph_Buffer.Append (Self, Make_Link (Text, "../" & Make_Clause_File_Name (Ada.Strings.Unbounded.To_String (Self.File_Prefix), Clause_Number) & "#" & Target, Self.In_Block_Tag));
    end Local_Link;
@@ -1010,9 +1021,9 @@ package body ARM_Ada_Lang_IO is
       Clause_Number : in String)
    is
    begin
-      --  Detail.Trace (Self, "Local_Link_Start");
-      --  Detail.Trace (Self, "Target: " & Target);
-      --  Detail.Trace (Self, "Clause Number: " & Clause_Number);
+      --  Debugging.Trace (Self, "Local_Link_Start");
+      --  Debugging.Trace (Self, "Target: " & Target);
+      --  Debugging.Trace (Self, "Clause Number: " & Clause_Number);
 
       -- todo: start link
       Paragraph_Buffer.Append (Self, "<a href=""" & "../" & Make_Clause_File_Name (Ada.Strings.Unbounded.To_String (Self.File_Prefix), Clause_Number) & "#" & Target & """>");
@@ -1028,9 +1039,9 @@ package body ARM_Ada_Lang_IO is
       Clause_Number : in String)
    is
    begin
-      --  Detail.Trace (Self, "Local_Link_End");
-      --  Detail.Trace (Self, "Target: " & Target);
-      --  Detail.Trace (Self, "Clause Number: " & Clause_Number);
+      --  Debugging.Trace (Self, "Local_Link_End");
+      --  Debugging.Trace (Self, "Target: " & Target);
+      --  Debugging.Trace (Self, "Clause Number: " & Clause_Number);
       Paragraph_Buffer.Append (Self, "</a>");
    end Local_Link_End;
 
@@ -1044,9 +1055,9 @@ package body ARM_Ada_Lang_IO is
       URL : in String)
    is
    begin
-      Detail.Trace (Self, "URL_Link");
-      Detail.Trace (Self, "Text: " & Text);
-      Detail.Trace (Self, "URL: " & URL);
+      Debugging.Trace (Self, "URL_Link");
+      Debugging.Trace (Self, "Text: " & Text);
+      Debugging.Trace (Self, "URL: " & URL);
 
       Paragraph_Buffer.Append (Self, Make_Link (Text, URL, Self.In_Block_Tag));
    end URL_Link;
@@ -1070,13 +1081,13 @@ package body ARM_Ada_Lang_IO is
       Border        : in ARM_Output.Border_Kind)
    is
    begin
-      Detail.Trace (Self, "Picture");
-      Detail.Trace (Self, "Name: " & Name);
-      Detail.Trace (Self, "Description: " & Descr);
-      Detail.Trace (Self, "Alignment: " & Alignment'Image);
-      Detail.Trace (Self, "Height: " & Height'Image);
-      Detail.Trace (Self, "Width: " & Width'Image);
-      Detail.Trace (Self, "Border: " & Border'Image);
+      Debugging.Trace (Self, "Picture");
+      Debugging.Trace (Self, "Name: " & Name);
+      Debugging.Trace (Self, "Description: " & Descr);
+      Debugging.Trace (Self, "Alignment: " & Alignment'Image);
+      Debugging.Trace (Self, "Height: " & Height'Image);
+      Debugging.Trace (Self, "Width: " & Width'Image);
+      Debugging.Trace (Self, "Border: " & Border'Image);
    end Picture;
 
 end ARM_Ada_Lang_IO;

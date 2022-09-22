@@ -17,6 +17,9 @@ package body ARM_Ada_Lang_IO is
    subtype Code_Block_Style is ARM_Output.Paragraph_Style_Type range ARM_Output.Examples .. ARM_Output.Small_Swiss_Examples;
    subtype Admonition_Style is ARM_Output.Paragraph_Style_Type range ARM_Output.Small .. ARM_Output.Small;
 
+   function "+"(S : Ada.Strings.Unbounded.Unbounded_String) return String renames Ada.Strings.Unbounded.To_String;
+   --  function "+"(S : String) renames Ada.Strings.Unbounded.To_Unbounded_String;
+
    ----------------------------------------------------------------------------
 
    package JSX is
@@ -167,7 +170,7 @@ package body ARM_Ada_Lang_IO is
          return (
             Paragraph.Style'Image
             & " " & Paragraph.Indent'Image
-            & " " & Ada.Strings.Unbounded.To_String (Paragraph.Number)
+            & " " & (+Paragraph.Number)
             & " " & Paragraph.Space_After'Image
             & " " & Paragraph.Justification'Image
          );
@@ -251,7 +254,7 @@ package body ARM_Ada_Lang_IO is
          Clause_Number : String;
          Header_Text : String)
       is
-         Dir : constant String := Ada.Strings.Unbounded.To_String (Self.Output_Path) & Directory_For_Clause (Ada.Strings.Unbounded.To_String (Self.File_Prefix), Clause_Number);
+         Dir : constant String := +Self.Output_Path & Directory_For_Clause (+Self.File_Prefix, Clause_Number);
       begin
          Close_File (Self);
 
@@ -301,7 +304,7 @@ package body ARM_Ada_Lang_IO is
      Title : in String := "";
      Verbose : Boolean := True)
    is
-      Dir : constant String := Ada.Strings.Unbounded.To_String (Self.Output_Path) & Directory_For_Clause (Ada.Strings.Unbounded.To_String (Self.File_Prefix), "");
+      Dir : constant String := +Self.Output_Path & Directory_For_Clause (+Self.File_Prefix, "");
    begin
       Self.File_Prefix := Ada.Strings.Unbounded.To_Unbounded_String (File_Prefix);
       Self.Output_Path := Ada.Strings.Unbounded.To_Unbounded_String (Output_Path);
@@ -459,14 +462,14 @@ package body ARM_Ada_Lang_IO is
             case Self.Current_Paragraph.Style is
                when ARM_Output.Text_Prefixed_Style_Subtype =>
                   Immediate.Put (Self, "<dd>");
-                  Immediate.Put (Self, Ada.Strings.Unbounded.To_String (Self.Buffer));
+                  Immediate.Put (Self, +Self.Buffer);
                   Immediate.Put (Self, "</dd>");
                when ARM_Output.Bullet_Prefixed_Style_Subtype =>
                   Immediate.Put (Self, "<li>");
-                  Immediate.Put (Self, Ada.Strings.Unbounded.To_String (Self.Buffer));
+                  Immediate.Put (Self, +Self.Buffer);
                   Immediate.Put (Self, "</li>");
                when others =>
-                  Immediate.Put (Self, Ada.Strings.Unbounded.To_String (Self.Buffer));
+                  Immediate.Put (Self, +Self.Buffer);
             end case;
 
             if not Is_Mergable_Paragraph (Self.Current_Paragraph.Style) then
@@ -787,7 +790,7 @@ package body ARM_Ada_Lang_IO is
    procedure End_Hang_Item (Self : in out Ada_Lang_IO_Output_Type) is
    begin
       Debugging.Trace (Self, "End_Hang_Item");
-      Immediate.Put_Line (Self, "<dt><br/>" & Ada.Strings.Unbounded.To_String (Self.Buffer) & "</dt>");
+      Immediate.Put_Line (Self, "<dt><br/>" & (+Self.Buffer) & "</dt>");
       Self.Buffer := Ada.Strings.Unbounded.Null_Unbounded_String;
    end End_Hang_Item;
 
@@ -894,7 +897,7 @@ package body ARM_Ada_Lang_IO is
       -- Ignore this by consuming the buffer.
       --  Self.Buffer := Ada.Strings.Unbounded.Null_Unbounded_String;
 
-      Paragraph_Buffer.Append (Self, JSX.Make_Link (Text, Make_Clause_Anchor (Ada.Strings.Unbounded.To_String (Self.File_Prefix), Formatter.Clauses.Simplify_Clause_Number (Clause_Number)), Self.In_Block_Tag));
+      Paragraph_Buffer.Append (Self, JSX.Make_Link (Text, Make_Clause_Anchor (+Self.File_Prefix, Formatter.Clauses.Simplify_Clause_Number (Clause_Number)), Self.In_Block_Tag));
    end Clause_Reference;
 
    -- Generate a index target. This marks the location where an index
@@ -1008,7 +1011,7 @@ package body ARM_Ada_Lang_IO is
       --  Debugging.Trace (Self, "Target: " & Target);
       --  Debugging.Trace (Self, "Clause Number: " & Clause_Number);
 
-      Paragraph_Buffer.Append (Self, JSX.Make_Link (Text, "../" & Make_Clause_File_Name (Ada.Strings.Unbounded.To_String (Self.File_Prefix), Clause_Number) & "#" & Target, Self.In_Block_Tag));
+      Paragraph_Buffer.Append (Self, JSX.Make_Link (Text, "../" & Make_Clause_File_Name (+Self.File_Prefix, Clause_Number) & "#" & Target, Self.In_Block_Tag));
    end Local_Link;
 
    -- Generate a local link to the target and clause given.
@@ -1027,7 +1030,7 @@ package body ARM_Ada_Lang_IO is
       --  Debugging.Trace (Self, "Clause Number: " & Clause_Number);
 
       -- todo: start link
-      Paragraph_Buffer.Append (Self, "<a href=""" & "../" & Make_Clause_File_Name (Ada.Strings.Unbounded.To_String (Self.File_Prefix), Clause_Number) & "#" & Target & """>");
+      Paragraph_Buffer.Append (Self, "<a href=""" & "../" & Make_Clause_File_Name (+Self.File_Prefix, Clause_Number) & "#" & Target & """>");
    end Local_Link_Start;
 
    -- End a local link for the target and clause given.

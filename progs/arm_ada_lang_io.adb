@@ -635,9 +635,6 @@ package body ARM_Ada_Lang_IO is
    is
       use type Ada.Strings.Unbounded.Unbounded_String;
    begin
-      --  Debugging.Trace (Self, "Ordinary_Text");
-      --  Debugging.Trace (Self, "Text: " & Text);
-      --  Immediate.Put_Line (Self, Text);
       --  If this isn't an admonition, then output it.
       Self.Last_Was_AI_Reference := False;
 
@@ -657,8 +654,6 @@ package body ARM_Ada_Lang_IO is
      (Self : in out Ada_Lang_IO_Output_Type; Char : in Character)
    is
    begin
-      --  Debugging.Trace (Self, "Ordinary_Character");
-      --  Debugging.Trace (Self, "Char: " & Char'Image);
       if not (Char = '}' or else Char = ' ' or else Char = '{' or else Char = Ada.Characters.Latin_1.LF)
          and then Self.Last_Was_AI_Reference and then Self.Current_Paragraph.Style not in Code_Block_Style
       then

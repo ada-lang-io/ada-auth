@@ -20,14 +20,14 @@ package body ARM_Ada_Lang_IO is
    ----------------------------------------------------------------------------
 
    package JSX is
-      function JSX_Wrap (S : String) return String;
+      function Wrap (S : String) return String;
       function Safe_Char (In_Block_Tag : Boolean; Char : Character) return String;
       function Anchor (Target, Text : String) return String;
       function Make_Link (Name : String; Target : String; In_Block_Tag : Boolean) return String;
    end JSX;
 
    package body JSX is
-      function JSX_Wrap (S : String) return String is ( "{""" & S & """}");
+      function Wrap (S : String) return String is ( "{""" & S & """}");
 
       function Safe_Char (In_Block_Tag : Boolean; Char : Character) return String is
       begin
@@ -967,7 +967,7 @@ package body ARM_Ada_Lang_IO is
       --  Debugging.Trace (Self, "AI_Reference");
       --  Debugging.Trace (Self, "Text: " & Text);
       --  Debugging.Trace (Self, "AI_Number: " & AI_Number);
-      --  Paragraph_Buffer.Append (Self, (if Self.In_Block_Tag then JSX_Wrap (Text) else Text));
+      --  Paragraph_Buffer.Append (Self, (if Self.In_Block_Tag then Wrap (Text) else Text));
 
       if Self.Current_Paragraph.Style in Code_Block_Style then
          Paragraph_Buffer.Backspace (Self, 5);  -- Delete the previously emitted {"{"}
@@ -975,7 +975,7 @@ package body ARM_Ada_Lang_IO is
          Ordinary_Character (Self, '{');
       end if;
 
-      Paragraph_Buffer.Append (Self, JSX.JSX_Wrap (Text));
+      Paragraph_Buffer.Append (Self, JSX.Wrap (Text));
 
       Self.Last_Was_AI_Reference := True;
    end AI_Reference;

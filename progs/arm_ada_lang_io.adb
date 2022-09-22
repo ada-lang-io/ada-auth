@@ -42,9 +42,6 @@ package body ARM_Ada_Lang_IO is
 
       procedure Backspace (Self : in out Ada_Lang_IO_Output_Type; Count : Positive);
 
-      procedure Start_File (Self : in out Ada_Lang_IO_Output_Type; File_Name : String; Clause_Number : String; Header_Text : String);      
-      procedure Close_File (Self : in out Ada_Lang_IO_Output_Type);
-
       procedure Put_Line (Self : in out Ada_Lang_IO_Output_Type; S : String);
       procedure Put (Self : in out Ada_Lang_IO_Output_Type; Char : Character);
       procedure Put (Self : in out Ada_Lang_IO_Output_Type; S : String);
@@ -186,47 +183,7 @@ package body ARM_Ada_Lang_IO is
          Self.Buffer := Ada.Strings.Unbounded.Delete (Self.Buffer, Last_Index - Count + 1, Last_Index);
       end Backspace;
 
-      procedure Close_File (Self : in out Ada_Lang_IO_Output_Type) is
-      begin
-         -- Close previous file (if exists)
-         if Ada.Text_IO.Is_Open (Self.Current_File) then
-            if Self.Mergable_Paragraph then
-               End_Paragraph_Style (Self, Self.Current_Paragraph.Style);
-            end if;
-
-            Ada.Text_IO.Close (Self.Current_File);
-         end if;
-      end Close_File;
-
-      procedure Start_File (
-         Self : in out Ada_Lang_IO_Output_Type;
-         File_Name : String;
-         Clause_Number : String;
-         Header_Text : String)
-      is
-         Dir : constant String := Ada.Strings.Unbounded.To_String (Self.Output_Path) & Directory_For_Clause (Ada.Strings.Unbounded.To_String (Self.File_Prefix), Clause_Number);
-      begin
-         Close_File (Self);
-
-         if not Ada.Directories.Exists (Dir) then
-            Detail.Trace (Self, "Creating new directory: " & Dir);
-            Ada.Directories.Create_Path (Dir);
-         end if;
-
-         -- Open new file
-         Ada.Text_IO.Create (Self.Current_File, Ada.Text_IO.Out_File, Dir & File_Name);
-
-         Make_New_Sidebar (Self);
-
-         Put_Heading (Self, "# " & Clause_Number & " " & Header_Text);
-
-         Print_Manual_Warning (Self);
-         Include_React_Elements (Self);
-
-         Self.Mergable_Paragraph := False;
-         Self.Being_Merged := False;
-
-      end Start_File;
+      -- Direct output
 
       procedure Put (Self : in out Ada_Lang_IO_Output_Type; Char : Character) is
       begin
@@ -257,6 +214,58 @@ package body ARM_Ada_Lang_IO is
       end Trace;
    end Detail;
 
+   package Files is
+      procedure Start_File (
+         Self : in out Ada_Lang_IO_Output_Type;
+         File_Name : String;
+         Clause_Number : String;
+         Header_Text : String);
+      procedure Close_File (Self : in out Ada_Lang_IO_Output_Type);
+   end Files;
+
+   package body Files is   
+      procedure Start_File (
+         Self : in out Ada_Lang_IO_Output_Type;
+         File_Name : String;
+         Clause_Number : String;
+         Header_Text : String)
+      is
+         Dir : constant String := Ada.Strings.Unbounded.To_String (Self.Output_Path) & Directory_For_Clause (Ada.Strings.Unbounded.To_String (Self.File_Prefix), Clause_Number);
+      begin
+         Close_File (Self);
+
+         if not Ada.Directories.Exists (Dir) then
+            Detail.Trace (Self, "Creating new directory: " & Dir);
+            Ada.Directories.Create_Path (Dir);
+         end if;
+
+         -- Open new file
+         Ada.Text_IO.Create (Self.Current_File, Ada.Text_IO.Out_File, Dir & File_Name);
+
+         Make_New_Sidebar (Self);
+
+         Put_Heading (Self, "# " & Clause_Number & " " & Header_Text);
+
+         Print_Manual_Warning (Self);
+         Include_React_Elements (Self);
+
+         Self.Mergable_Paragraph := False;
+         Self.Being_Merged := False;
+      end Start_File;
+      
+      procedure Close_File (Self : in out Ada_Lang_IO_Output_Type) is
+      begin
+         -- Close previous file (if exists)
+         if Ada.Text_IO.Is_Open (Self.Current_File) then
+            if Self.Mergable_Paragraph then
+               End_Paragraph_Style (Self, Self.Current_Paragraph.Style);
+            end if;
+
+            Ada.Text_IO.Close (Self.Current_File);
+         end if;
+      end Close_File;
+   end Files;
+
    ----------------------------------------------------------------------------
 
    -- Create an Self for a document.
@@ -276,7 +285,7 @@ package body ARM_Ada_Lang_IO is
       Self.File_Prefix := Ada.Strings.Unbounded.To_Unbounded_String (File_Prefix);
       Self.Output_Path := Ada.Strings.Unbounded.To_Unbounded_String (Output_Path);
 
-      Detail.Start_File (Self, File_Prefix & "-Title.mdx", "", Title);
+      Files.Start_File (Self, File_Prefix & "-Title.mdx", "", Title);
 
       Self.Verbose := Verbose;
    end Create;
@@ -502,9 +511,9 @@ package body ARM_Ada_Lang_IO is
          | ARM_Contents.Plain_Annex
          | ARM_Contents.Informative_Annex
          | ARM_Contents.Normative_Annex =>
-            Detail.Start_File (Self, File_Name, Clause_Number, Header_Text);
+            Files.Start_File (Self, File_Name, Clause_Number, Header_Text);
          when ARM_Contents.Clause =>
-            Detail.Start_File (Self, "AA-" & Clause_Number & ".mdx", Clause_Number, Header_Text);
+            Files.Start_File (Self, "AA-" & Clause_Number & ".mdx", Clause_Number, Header_Text);
          when ARM_Contents.Subclause =>
             Make_Clause_Target (Self, Clause_Number);
             Put_Heading (Self, "## " & Clause_Number & "  " & Header_Text);

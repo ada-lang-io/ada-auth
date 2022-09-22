@@ -31,16 +31,26 @@ package body ARM_Ada_Lang_IO is
       end case;
    end Safe_Char;
 
+   function Anchor (Target, Text : String) return String is
+   begin
+      return "<a id=""" & Target & """>" & Text & "</a>";
+   end Anchor;
+
    package Detail is
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; Char : Character);
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; S : String);
-      function Anchor (Self : in out Ada_Lang_IO_Output_Type; Target, Text : String) return String;
+
       procedure Backspace (Self : in out Ada_Lang_IO_Output_Type; Count : Positive);
-      procedure Start_File (Self : in out Ada_Lang_IO_Output_Type; File_Name : String; Clause_Number : String; Header_Text : String);
+
+      procedure Start_File (Self : in out Ada_Lang_IO_Output_Type; File_Name : String; Clause_Number : String; Header_Text : String);      
+      procedure Close_File (Self : in out Ada_Lang_IO_Output_Type);
+
       procedure Put_Line (Self : in out Ada_Lang_IO_Output_Type; S : String);
       procedure Put (Self : in out Ada_Lang_IO_Output_Type; Char : Character);
       procedure Put (Self : in out Ada_Lang_IO_Output_Type; S : String);
       procedure New_Line (Self : in out Ada_Lang_IO_Output_Type; Count : Ada.Text_IO.Positive_Count := 1);
+
+      -- Debugging element.
       procedure Trace (Self : in out Ada_Lang_IO_Output_Type; S : String);
    end Detail;
 
@@ -72,30 +82,37 @@ package body ARM_Ada_Lang_IO is
       Detail.New_Line (Self);
    end Include_React_Elements;
 
-   function Format_To_String (Format : ARM_Output.Format_Type) return String is
-   begin
-      return (
-         (if Format.Bold then "B" else " ")
-         & (if Format.Italic then "I" else " ")
-         & (case Format.Font is
-            when ARM_Output.Roman => "R",
-            when ARM_Output.Swiss => "S",
-            when ARM_Output.Fixed => "F",
-            when ARM_Output.Default => "D")
-         & Format.Size'Image
-      );
-   end Format_To_String;
+   package Debugging is
+      function Format_To_String (Format : ARM_Output.Format_Type) return String;
+      function Paragraph_To_String (Paragraph : Paragraph_Styling) return String;
+   end Debugging;
 
-   function Paragraph_To_String (Paragraph : Paragraph_Styling) return String is
-   begin
-      return (
-         Paragraph.Style'Image
-         & " " & Paragraph.Indent'Image
-         & " " & Ada.Strings.Unbounded.To_String (Paragraph.Number)
-         & " " & Paragraph.Space_After'Image
-         & " " & Paragraph.Justification'Image
-      );
-   end Paragraph_To_String;
+   package body Debugging is
+      function Format_To_String (Format : ARM_Output.Format_Type) return String is
+      begin
+         return (
+            (if Format.Bold then "B" else " ")
+            & (if Format.Italic then "I" else " ")
+            & (case Format.Font is
+               when ARM_Output.Roman => "R",
+               when ARM_Output.Swiss => "S",
+               when ARM_Output.Fixed => "F",
+               when ARM_Output.Default => "D")
+            & Format.Size'Image
+         );
+      end Format_To_String;
+
+      function Paragraph_To_String (Paragraph : Paragraph_Styling) return String is
+      begin
+         return (
+            Paragraph.Style'Image
+            & " " & Paragraph.Indent'Image
+            & " " & Ada.Strings.Unbounded.To_String (Paragraph.Number)
+            & " " & Paragraph.Space_After'Image
+            & " " & Paragraph.Justification'Image
+         );
+      end Paragraph_To_String;
+   end Debugging;
 
    function Make_Link (Name : String; Target : String; In_Block_Tag : Boolean) return String is
    begin
@@ -148,7 +165,7 @@ package body ARM_Ada_Lang_IO is
       Anchor_Target : constant String := Make_Clause_Anchor_Inner_Target (Clause_Number);
    begin
       if Anchor_Target /= "" then
-         Detail.Put_Line (Self, Detail.Anchor (Self, Anchor_Target, ""));
+         Detail.Put_Line (Self, Anchor (Anchor_Target, ""));
       end if;
    end Make_Clause_Target;
 
@@ -162,12 +179,6 @@ package body ARM_Ada_Lang_IO is
       begin
          Ada.Strings.Unbounded.Append (Self.Buffer, S);
       end Append;
-
-      function Anchor (Self : in out Ada_Lang_IO_Output_Type; Target, Text : String) return String is
-      begin
-         return "<a id=""" & Target & """>"
-            & Text & "</a>";
-      end Anchor;
 
       procedure Backspace (Self : in out Ada_Lang_IO_Output_Type; Count : Positive) is
          Last_Index : constant Positive := Ada.Strings.Unbounded.Length (Self.Buffer);
@@ -351,7 +362,7 @@ package body ARM_Ada_Lang_IO is
          Justification => Justification
       );
    begin
-      Detail.Trace (Self, "Start_Paragraph: " & Paragraph_To_String (New_Paragraph));
+      Detail.Trace (Self, "Start_Paragraph: " & Debugging.Paragraph_To_String (New_Paragraph));
 
       if Number /= "0" then
          Detail.Put_Line (Self, "<AnnotatedOnly>");
@@ -954,7 +965,7 @@ package body ARM_Ada_Lang_IO is
       --  Detail.Trace (Self, "Text: " & Text);
       --  Detail.Trace (Self, "Target: " & Target);
 
-      Detail.Append (Self, Detail.Anchor (Self, Target, Text));
+      Detail.Append (Self, Anchor (Target, Text));
    end Local_Target;
 
    -- Generate a local link to the target and clause given.

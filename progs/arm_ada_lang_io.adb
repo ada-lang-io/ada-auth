@@ -36,12 +36,31 @@ package body ARM_Ada_Lang_IO is
       return "<a id=""" & Target & """>" & Text & "</a>";
    end Anchor;
 
-   package Detail is
+   package Paragraph_Buffer is
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; Char : Character);
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; S : String);
-
       procedure Backspace (Self : in out Ada_Lang_IO_Output_Type; Count : Positive);
+   end Paragraph_Buffer;
 
+   package body Paragraph_Buffer is
+      procedure Append (Self : in out Ada_Lang_IO_Output_Type; Char : Character) is
+      begin
+         Ada.Strings.Unbounded.Append (Self.Buffer, Safe_Char (Self.In_Block_Tag, Char));
+      end Append;
+
+      procedure Append (Self : in out Ada_Lang_IO_Output_Type; S : String) is
+      begin
+         Ada.Strings.Unbounded.Append (Self.Buffer, S);
+      end Append;
+
+      procedure Backspace (Self : in out Ada_Lang_IO_Output_Type; Count : Positive) is
+         Last_Index : constant Positive := Ada.Strings.Unbounded.Length (Self.Buffer);
+      begin
+         Self.Buffer := Ada.Strings.Unbounded.Delete (Self.Buffer, Last_Index - Count + 1, Last_Index);
+      end Backspace;
+   end Paragraph_Buffer;
+
+   package Detail is
       procedure Put_Line (Self : in out Ada_Lang_IO_Output_Type; S : String);
       procedure Put (Self : in out Ada_Lang_IO_Output_Type; Char : Character);
       procedure Put (Self : in out Ada_Lang_IO_Output_Type; S : String);
@@ -167,22 +186,6 @@ package body ARM_Ada_Lang_IO is
    end Make_Clause_Target;
 
    package body Detail is
-      procedure Append (Self : in out Ada_Lang_IO_Output_Type; Char : Character) is
-      begin
-         Ada.Strings.Unbounded.Append (Self.Buffer, Safe_Char (Self.In_Block_Tag, Char));
-      end Append;
-
-      procedure Append (Self : in out Ada_Lang_IO_Output_Type; S : String) is
-      begin
-         Ada.Strings.Unbounded.Append (Self.Buffer, S);
-      end Append;
-
-      procedure Backspace (Self : in out Ada_Lang_IO_Output_Type; Count : Positive) is
-         Last_Index : constant Positive := Ada.Strings.Unbounded.Length (Self.Buffer);
-      begin
-         Self.Buffer := Ada.Strings.Unbounded.Delete (Self.Buffer, Last_Index - Count + 1, Last_Index);
-      end Backspace;
-
       -- Direct output
 
       procedure Put (Self : in out Ada_Lang_IO_Output_Type; Char : Character) is
@@ -399,7 +402,7 @@ package body ARM_Ada_Lang_IO is
 
    procedure End_Paragraph (Self : in out Ada_Lang_IO_Output_Type) is
    begin
-      Detail.Append (Self, Ada.Characters.Latin_1.LF);
+      Paragraph_Buffer.Append (Self, Ada.Characters.Latin_1.LF);
 
       -- Outputs the current buffer in the current format.
       if not (for all X in 1 .. Ada.Strings.Unbounded.Length (Self.Buffer)
@@ -628,7 +631,7 @@ package body ARM_Ada_Lang_IO is
       end loop;
 
       for Char of Text loop
-         Detail.Append (Self, Char);
+         Paragraph_Buffer.Append (Self, Char);
       end loop;
    end Ordinary_Text;
 
@@ -645,7 +648,7 @@ package body ARM_Ada_Lang_IO is
          Self.Last_Was_AI_Reference := False;
       end if;
 
-      Detail.Append (Self, Safe_Char (Self.In_Block_Tag, Char));
+      Paragraph_Buffer.Append (Self, Safe_Char (Self.In_Block_Tag, Char));
 
       if Char = '}'
          and then Self.Last_Was_AI_Reference
@@ -815,27 +818,27 @@ package body ARM_Ada_Lang_IO is
          -- at once.
          if Format /= Self.Current_Format then
             if Format.Font /= ARM_Output.Swiss and then Self.Current_Format.Font = ARM_Output.Swiss then
-               Detail.Append (Self, "</code>");
+               Paragraph_Buffer.Append (Self, "</code>");
             end if;
 
             if Format.Italic /= Self.Current_Format.Italic and then not Format.Italic then
-               Detail.Append (Self, "</em>");
+               Paragraph_Buffer.Append (Self, "</em>");
             end if;
 
             if Format.Bold /= Self.Current_Format.Bold and then not Format.Bold then
-               Detail.Append (Self, "</strong>");
+               Paragraph_Buffer.Append (Self, "</strong>");
             end if;
 
             if Format.Bold /= Self.Current_Format.Bold and then Format.Bold then
-               Detail.Append (Self, "<strong>");
+               Paragraph_Buffer.Append (Self, "<strong>");
             end if;
 
             if Format.Italic /= Self.Current_Format.Italic and then Format.Italic then
-               Detail.Append (Self, "<em>");
+               Paragraph_Buffer.Append (Self, "<em>");
             end if;
 
             if Format.Font = ARM_Output.Swiss and then Self.Current_Format.Font /= ARM_Output.Swiss then
-               Detail.Append (Self, "<code>");
+               Paragraph_Buffer.Append (Self, "<code>");
             end if;
          end if;
       end if;
@@ -879,7 +882,7 @@ package body ARM_Ada_Lang_IO is
       -- Ignore this by consuming the buffer.
       --  Self.Buffer := Ada.Strings.Unbounded.Null_Unbounded_String;
 
-      Detail.Append (Self, Make_Link (Text, Make_Clause_Anchor (Ada.Strings.Unbounded.To_String (Self.File_Prefix), Formatter.Clauses.Simplify_Clause_Number (Clause_Number)), Self.In_Block_Tag));
+      Paragraph_Buffer.Append (Self, Make_Link (Text, Make_Clause_Anchor (Ada.Strings.Unbounded.To_String (Self.File_Prefix), Formatter.Clauses.Simplify_Clause_Number (Clause_Number)), Self.In_Block_Tag));
    end Clause_Reference;
 
    -- Generate a index target. This marks the location where an index
@@ -914,7 +917,7 @@ package body ARM_Ada_Lang_IO is
       --  Detail.Trace (Self, "Text: " & Text);
       --  Detail.Trace (Self, "Index_Key: " & Index_Key'Image);
 
-      Detail.Append (Self, Text);
+      Paragraph_Buffer.Append (Self, Text);
    end Index_Reference;
 
    -- Generate a reference to an DR from the standard. The text
@@ -932,7 +935,7 @@ package body ARM_Ada_Lang_IO is
       --  Detail.Trace (Self, "DR_Reference");
       --  Detail.Trace (Self, "DR Number: " & DR_Number);
 
-      Detail.Append (Self, Text);
+      Paragraph_Buffer.Append (Self, Text);
    end DR_Reference;
 
    -- Generate a reference to an AI from the standard. The text
@@ -947,15 +950,15 @@ package body ARM_Ada_Lang_IO is
       --  Detail.Trace (Self, "AI_Reference");
       --  Detail.Trace (Self, "Text: " & Text);
       --  Detail.Trace (Self, "AI_Number: " & AI_Number);
-      --  Detail.Append (Self, (if Self.In_Block_Tag then JSX_Wrap (Text) else Text));
+      --  Paragraph_Buffer.Append (Self, (if Self.In_Block_Tag then JSX_Wrap (Text) else Text));
 
       if Self.Current_Paragraph.Style in Code_Block_Style then
-         Detail.Backspace (Self, 5);  -- Delete the previously emitted {"{"}
-         Detail.Append (Self, "--  ");
+         Paragraph_Buffer.Backspace (Self, 5);  -- Delete the previously emitted {"{"}
+         Paragraph_Buffer.Append (Self, "--  ");
          Ordinary_Character (Self, '{');
       end if;
 
-      Detail.Append (Self, JSX_Wrap (Text));
+      Paragraph_Buffer.Append (Self, JSX_Wrap (Text));
 
       Self.Last_Was_AI_Reference := True;
    end AI_Reference;
@@ -974,7 +977,7 @@ package body ARM_Ada_Lang_IO is
       --  Detail.Trace (Self, "Text: " & Text);
       --  Detail.Trace (Self, "Target: " & Target);
 
-      Detail.Append (Self, Anchor (Target, Text));
+      Paragraph_Buffer.Append (Self, Anchor (Target, Text));
    end Local_Target;
 
    -- Generate a local link to the target and clause given.
@@ -993,7 +996,7 @@ package body ARM_Ada_Lang_IO is
       --  Detail.Trace (Self, "Target: " & Target);
       --  Detail.Trace (Self, "Clause Number: " & Clause_Number);
 
-      Detail.Append (Self, Make_Link (Text, "../" & Make_Clause_File_Name (Ada.Strings.Unbounded.To_String (Self.File_Prefix), Clause_Number) & "#" & Target, Self.In_Block_Tag));
+      Paragraph_Buffer.Append (Self, Make_Link (Text, "../" & Make_Clause_File_Name (Ada.Strings.Unbounded.To_String (Self.File_Prefix), Clause_Number) & "#" & Target, Self.In_Block_Tag));
    end Local_Link;
 
    -- Generate a local link to the target and clause given.
@@ -1012,7 +1015,7 @@ package body ARM_Ada_Lang_IO is
       --  Detail.Trace (Self, "Clause Number: " & Clause_Number);
 
       -- todo: start link
-      Detail.Append (Self, "<a href=""" & "../" & Make_Clause_File_Name (Ada.Strings.Unbounded.To_String (Self.File_Prefix), Clause_Number) & "#" & Target & """>");
+      Paragraph_Buffer.Append (Self, "<a href=""" & "../" & Make_Clause_File_Name (Ada.Strings.Unbounded.To_String (Self.File_Prefix), Clause_Number) & "#" & Target & """>");
    end Local_Link_Start;
 
    -- End a local link for the target and clause given.
@@ -1028,7 +1031,7 @@ package body ARM_Ada_Lang_IO is
       --  Detail.Trace (Self, "Local_Link_End");
       --  Detail.Trace (Self, "Target: " & Target);
       --  Detail.Trace (Self, "Clause Number: " & Clause_Number);
-      Detail.Append (Self, "</a>");
+      Paragraph_Buffer.Append (Self, "</a>");
    end Local_Link_End;
 
    -- Generate a link to the URL given.
@@ -1045,7 +1048,7 @@ package body ARM_Ada_Lang_IO is
       Detail.Trace (Self, "Text: " & Text);
       Detail.Trace (Self, "URL: " & URL);
 
-      Detail.Append (Self, Make_Link (Text, URL, Self.In_Block_Tag));
+      Paragraph_Buffer.Append (Self, Make_Link (Text, URL, Self.In_Block_Tag));
    end URL_Link;
 
    -- Generate a picture.

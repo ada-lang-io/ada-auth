@@ -715,29 +715,57 @@ package body ARM_Ada_Lang_IO is
       --  Debugging.Trace (Self, "Special_Character");
       --  Debugging.Trace (Self, "Char: " & Char'Image);
       case Char is
-         when ARM_Output.EM_Dash => Ordinary_Character (Self, '-');
-         when ARM_Output.Left_Double_Quote => Ordinary_Character (Self, '"');
-         when ARM_Output.Right_Double_Quote => Ordinary_Character (Self, '"');
-         when ARM_Output.Right_Quote => Ordinary_Character (Self, ''');
-         when ARM_Output.Left_Quote => Ordinary_Character (Self, ''');
-         when others => null;
-
-            --  EN_Dash, -- EN (long) dash
+	     when ARM_Output.EM_Dash =>
+            --  EM (long) dash
+	        Paragraph_Buffer.Append (Self, "&mdash;");
+	     when ARM_Output.EN_Dash =>
+            --  EN (shor) dash
+		    Paragraph_Buffer.Append (Self, "&ndash;");
+	     when ARM_Output.GEQ =>
             --  GEQ, -- Greater than or equal symbol.
+	        Paragraph_Buffer.Append (Self, "&ge;");
+	     when ARM_Output.LEQ =>
             --  LEQ, -- Less than or equal symbol.
+	        Paragraph_Buffer.Append (Self, "&le;");
+	     when ARM_Output.NEQ =>
             --  NEQ, -- Not equal symbol.
+	        Paragraph_Buffer.Append (Self, "&ne;");
+	     when ARM_Output.PI =>
             --  PI,  -- PI.
+	        Paragraph_Buffer.Append (Self, "&pi;");
+	     when ARM_Output.Left_Ceiling =>
             --  Left_Ceiling, -- Left half of ceiling.
+	        Paragraph_Buffer.Append (Self, "&lceil;");
+	     when ARM_Output.Right_Ceiling =>
             --  Right_Ceiling, -- Right half of ceiling.
+	        Paragraph_Buffer.Append (Self, "&rceil;");
+	     when ARM_Output.Left_Floor =>
             --  Left_Floor, -- Left half of floor.
+	        Paragraph_Buffer.Append (Self, "&lfloor;");
+	     when ARM_Output.Right_Floor =>
             --  Right_Floor, -- Right half of floor.
+	        Paragraph_Buffer.Append (Self, "&rfloor;");
+	     when ARM_Output.Thin_Space =>
             --  Thin_Space, -- A thinner than usual space.
+	        Paragraph_Buffer.Append (Self, "&thinsp;");
+	     when ARM_Output.Left_Quote =>
             --  Left_Quote, -- A left facing single quote.
+	        Paragraph_Buffer.Append (Self, "&lsquo;");
+	     when ARM_Output.Right_Quote =>
             --  Right_Quote, -- A right facing single quote.
+	        Paragraph_Buffer.Append (Self, "&rsquo;");
+	     when ARM_Output.Left_Double_Quote =>
             --  Left_Double_Quote, -- A left facing double quote.
+	        Paragraph_Buffer.Append (Self, "&ldquo;");
+	     when ARM_Output.Right_Double_Quote =>
             --  Right_Double_Quote, -- A right facing double quote.
+	        Paragraph_Buffer.Append (Self, "&rdquo;");
+	     when ARM_Output.Small_Dotless_I =>
             --  Small_Dotless_I, -- A small i without a dot (Unicode(16#0131#).
+	        Paragraph_Buffer.Append (Self, "&#0305;");
+	     when ARM_Output.Capital_Dotted_I =>
             --  Capital_Dotted_I -- A large I with a dot (Unicode(16#0130#).
+	        Paragraph_Buffer.Append (Self, "&#0304;");
       end case;
    end Special_Character;
 

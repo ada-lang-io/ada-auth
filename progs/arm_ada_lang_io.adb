@@ -867,7 +867,7 @@ package body ARM_Ada_Lang_IO is
       -- Ignore this by consuming the buffer.
       --  Self.Buffer := Ada.Strings.Unbounded.Null_Unbounded_String;
 
-      Paragraph_Buffer.Append (Self, Formatter.JSX.Make_Link (Text, Make_Clause_Anchor (+Self.File_Prefix, Formatter.Clauses.Simplify_Clause_Number (Clause_Number)), Self.In_Block_Tag));
+      Paragraph_Buffer.Append (Self, Formatter.JSX.Make_Link (Text, Relative_Link_Path (Self) & Make_Clause_Anchor (+Self.File_Prefix, Formatter.Clauses.Simplify_Clause_Number (Clause_Number)), Self.In_Block_Tag));
    end Clause_Reference;
 
    -- Generate a index target. This marks the location where an index

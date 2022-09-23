@@ -35,11 +35,11 @@ package body ARM_Ada_Lang_IO is
       function Safe_Char (In_Block_Tag : Boolean; Char : Character) return String is
       begin
          case Char is
-            when '<' => return JSX_Wrap ("<");
-            when '>' => return JSX_Wrap (">");
-            when '{' => return JSX_Wrap ("{");
-            when '}' => return JSX_Wrap ("}");
-            when Ada.Characters.Latin_1.LF => return (if In_Block_Tag then JSX_Wrap ("\n") else "<br />");
+            when '<' => return Wrap ("<");
+            when '>' => return Wrap (">");
+            when '{' => return Wrap ("{");
+            when '}' => return Wrap ("}");
+            when Ada.Characters.Latin_1.LF => return (if In_Block_Tag then Wrap ("\n") else "<br />");
             when others => return Ada.Strings.UTF_Encoding.Strings.Encode ((1 => Char));
          end case;
       end Safe_Char;

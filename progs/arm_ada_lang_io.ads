@@ -436,6 +436,9 @@ private
       -- Also additional characters might need to be escaped, like { and }
       In_Block_Tag : Boolean := False;
       Admonition_Format : Admonition_Type := Note;
+
+      -- Front matter sections aren't in subfolders.
+      In_Front_Matter : Boolean := False;
    end record;
 
 end ARM_Ada_Lang_IO;

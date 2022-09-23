@@ -368,11 +368,7 @@ package body ARM_Ada_Lang_IO is
       Debugging.Trace (Self, "Start_Paragraph: " & Debugging.Paragraph_To_String (New_Paragraph));
 
       if Number /= "0" then
-         Immediate.Put_Line (Self, "<AnnotatedOnly>");
-         Immediate.Put_Line (Self, "<MarginText>");
-         Immediate.Put_Line (Self, Number);
-         Immediate.Put_Line (Self, "</MarginText>");
-         Immediate.Put_Line (Self, "</AnnotatedOnly>");
+         Immediate.Put_Line (Self, "<MarginText>" & Number & "</MarginText>");
       end if;
 
       if Self.Mergable_Paragraph then

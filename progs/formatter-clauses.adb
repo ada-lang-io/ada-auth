@@ -3,6 +3,8 @@ with Ada.Strings.Maps;
 with Ada.Text_IO;
 
 package body Formatter.Clauses is
+   function Is_Front_Matter_Clause (Clause_Number : String) return Boolean is
+      (Clause_Number = "TOC" or else Clause_Number = "Title");
 
    function Is_Top_Level_Clause (Clause_Number : String) return Boolean is
       Dot_Set : constant Ada.Strings.Maps.Character_Set := Ada.Strings.Maps.To_Set ('.');
@@ -32,9 +34,8 @@ package body Formatter.Clauses is
    return String is
    begin
       return (if Clause_Number /= ""
-         then File_Prefix & "-" & Find_Top_Level_Clause (Simplify_Clause_Number (Clause_Number))
-         else File_Prefix & "-" & "0")
-         & "/";
+         then File_Prefix & "-" & Find_Top_Level_Clause (Simplify_Clause_Number (Clause_Number)) & "/"
+         else "");
    end Directory_For_Clause;
 
    function Make_Clause_File_Stem (
@@ -85,7 +86,7 @@ package body Formatter.Clauses is
       Maybe_Target : constant String := Make_Clause_Anchor_Inner_Target (Clause_Number);
       Anchor_Name : constant String := (if Maybe_Target = "" then "" else "#" & Maybe_Target);
    begin
-      return "../" & (if Maybe_Target = "" then Directory_For_Clause (File_Prefix, Clause_Number)
+      return (if Maybe_Target = "" then Directory_For_Clause (File_Prefix, Clause_Number)
          else Make_Clause_File_Name (File_Prefix, Clause_Number) & Anchor_Name);
    end Make_Clause_Anchor;
 

@@ -1,4 +1,5 @@
 package Formatter.Clauses is
+   function Is_Front_Matter_Clause (Clause_Number : String) return Boolean;
    function Is_Top_Level_Clause (Clause_Number : String) return Boolean;
    function Find_Top_Level_Clause (Clause_Number : String) return String;
    function Simplify_Clause_Number (Clause_Number : String) return String;

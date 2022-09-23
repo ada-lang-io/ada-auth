@@ -201,6 +201,9 @@ package body ARM_Ada_Lang_IO is
       end if;
    end Make_Clause_Target;
 
+   function Relative_Link_Path (Self : in out Ada_Lang_IO_Output_Type) return String is
+      (if Self.In_Front_Matter then "" else "../");
+
    ----------------------------------------------------------------------------
 
    package Files is
@@ -230,6 +233,8 @@ package body ARM_Ada_Lang_IO is
 
          -- Open new file
          Ada.Text_IO.Create (Self.Current_File, Ada.Text_IO.Out_File, Dir & File_Name);
+
+         Self.In_Front_Matter := Is_Front_Matter_Clause (Clause_Number);
 
          Make_New_Sidebar (Self);
 
@@ -976,7 +981,7 @@ package body ARM_Ada_Lang_IO is
       --  Debugging.Trace (Self, "Target: " & Target);
       --  Debugging.Trace (Self, "Clause Number: " & Clause_Number);
 
-      Paragraph_Buffer.Append (Self, Formatter.JSX.Make_Link (Text, "../" & Make_Clause_File_Name (+Self.File_Prefix, Clause_Number) & "#" & Target, Self.In_Block_Tag));
+      Paragraph_Buffer.Append (Self, Formatter.JSX.Make_Link (Text, Relative_Link_Path (Self) & Make_Clause_File_Name (+Self.File_Prefix, Clause_Number) & "#" & Target, Self.In_Block_Tag));
    end Local_Link;
 
    -- Generate a local link to the target and clause given.
@@ -995,7 +1000,7 @@ package body ARM_Ada_Lang_IO is
       --  Debugging.Trace (Self, "Clause Number: " & Clause_Number);
 
       -- todo: start link
-      Paragraph_Buffer.Append (Self, "<a href=""" & "../" & Make_Clause_File_Name (+Self.File_Prefix, Clause_Number) & "#" & Target & """>");
+      Paragraph_Buffer.Append (Self, "<a href=""" & Relative_Link_Path (Self) & Make_Clause_File_Name (+Self.File_Prefix, Clause_Number) & "#" & Target & """>");
    end Local_Link_Start;
 
    -- End a local link for the target and clause given.

@@ -6,11 +6,11 @@ with Ada.Exceptions;
 with Ada.Strings.Fixed;
 with Ada.Strings.Maps;
 with Ada.Strings.Unbounded;
-with Ada.Strings.UTF_Encoding.Strings;
 with Ada.Characters.Latin_1;
 use Ada.Text_IO;
 
 with Formatter.Clauses;  use Formatter.Clauses;
+with Formatter.JSX;
 
 package body ARM_Ada_Lang_IO is
    --  Identifies code blocks requiring a <CodeBlock> tag.
@@ -19,41 +19,6 @@ package body ARM_Ada_Lang_IO is
 
    function "+"(S : Ada.Strings.Unbounded.Unbounded_String) return String renames Ada.Strings.Unbounded.To_String;
    --  function "+"(S : String) renames Ada.Strings.Unbounded.To_Unbounded_String;
-
-   ----------------------------------------------------------------------------
-
-   package JSX is
-      function Wrap (S : String) return String;
-      function Safe_Char (In_Block_Tag : Boolean; Char : Character) return String;
-      function Anchor (Target, Text : String) return String;
-      function Make_Link (Name : String; Target : String; In_Block_Tag : Boolean) return String;
-   end JSX;
-
-   package body JSX is
-      function Wrap (S : String) return String is ( "{""" & S & """}");
-
-      function Safe_Char (In_Block_Tag : Boolean; Char : Character) return String is
-      begin
-         case Char is
-            when '<' => return Wrap ("<");
-            when '>' => return Wrap (">");
-            when '{' => return Wrap ("{");
-            when '}' => return Wrap ("}");
-            when Ada.Characters.Latin_1.LF => return (if In_Block_Tag then Wrap ("\n") else "<br />");
-            when others => return Ada.Strings.UTF_Encoding.Strings.Encode ((1 => Char));
-         end case;
-      end Safe_Char;
-
-      function Anchor (Target, Text : String) return String is
-      begin
-         return "<a id=""" & Target & """>" & Text & "</a>";
-      end Anchor;
-
-      function Make_Link (Name : String; Target : String; In_Block_Tag : Boolean) return String is
-      begin
-         return "<a href=""" & Target & """" & ">" & Name & "</a>";
-      end Make_Link;
-   end JSX;
 
    ----------------------------------------------------------------------------
 
@@ -66,7 +31,7 @@ package body ARM_Ada_Lang_IO is
    package body Paragraph_Buffer is
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; Char : Character) is
       begin
-         Ada.Strings.Unbounded.Append (Self.Buffer, JSX.Safe_Char (Self.In_Block_Tag, Char));
+         Ada.Strings.Unbounded.Append (Self.Buffer, Formatter.JSX.Safe_Char (Self.In_Block_Tag, Char));
       end Append;
 
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; S : String) is
@@ -232,7 +197,7 @@ package body ARM_Ada_Lang_IO is
       Anchor_Target : constant String := Make_Clause_Anchor_Inner_Target (Clause_Number);
    begin
       if Anchor_Target /= "" then
-         Immediate.Put_Line (Self, JSX.Anchor (Anchor_Target, ""));
+         Immediate.Put_Line (Self, Formatter.JSX.Anchor (Anchor_Target, ""));
       end if;
    end Make_Clause_Target;
 
@@ -664,7 +629,7 @@ package body ARM_Ada_Lang_IO is
          Self.Last_Was_AI_Reference := False;
       end if;
 
-      Paragraph_Buffer.Append (Self, JSX.Safe_Char (Self.In_Block_Tag, Char));
+      Paragraph_Buffer.Append (Self, Formatter.JSX.Safe_Char (Self.In_Block_Tag, Char));
 
       if Char = '}'
          and then Self.Last_Was_AI_Reference
@@ -897,7 +862,7 @@ package body ARM_Ada_Lang_IO is
       -- Ignore this by consuming the buffer.
       --  Self.Buffer := Ada.Strings.Unbounded.Null_Unbounded_String;
 
-      Paragraph_Buffer.Append (Self, JSX.Make_Link (Text, Make_Clause_Anchor (+Self.File_Prefix, Formatter.Clauses.Simplify_Clause_Number (Clause_Number)), Self.In_Block_Tag));
+      Paragraph_Buffer.Append (Self, Formatter.JSX.Make_Link (Text, Make_Clause_Anchor (+Self.File_Prefix, Formatter.Clauses.Simplify_Clause_Number (Clause_Number)), Self.In_Block_Tag));
    end Clause_Reference;
 
    -- Generate a index target. This marks the location where an index
@@ -973,7 +938,7 @@ package body ARM_Ada_Lang_IO is
          Ordinary_Character (Self, '{');
       end if;
 
-      Paragraph_Buffer.Append (Self, JSX.Wrap (Text));
+      Paragraph_Buffer.Append (Self, Formatter.JSX.Wrap (Text));
 
       Self.Last_Was_AI_Reference := True;
    end AI_Reference;
@@ -992,7 +957,7 @@ package body ARM_Ada_Lang_IO is
       --  Debugging.Trace (Self, "Text: " & Text);
       --  Debugging.Trace (Self, "Target: " & Target);
 
-      Paragraph_Buffer.Append (Self, JSX.Anchor (Target, Text));
+      Paragraph_Buffer.Append (Self, Formatter.JSX.Anchor (Target, Text));
    end Local_Target;
 
    -- Generate a local link to the target and clause given.
@@ -1011,7 +976,7 @@ package body ARM_Ada_Lang_IO is
       --  Debugging.Trace (Self, "Target: " & Target);
       --  Debugging.Trace (Self, "Clause Number: " & Clause_Number);
 
-      Paragraph_Buffer.Append (Self, JSX.Make_Link (Text, "../" & Make_Clause_File_Name (+Self.File_Prefix, Clause_Number) & "#" & Target, Self.In_Block_Tag));
+      Paragraph_Buffer.Append (Self, Formatter.JSX.Make_Link (Text, "../" & Make_Clause_File_Name (+Self.File_Prefix, Clause_Number) & "#" & Target, Self.In_Block_Tag));
    end Local_Link;
 
    -- Generate a local link to the target and clause given.
@@ -1063,7 +1028,7 @@ package body ARM_Ada_Lang_IO is
       Debugging.Trace (Self, "Text: " & Text);
       Debugging.Trace (Self, "URL: " & URL);
 
-      Paragraph_Buffer.Append (Self, JSX.Make_Link (Text, URL, Self.In_Block_Tag));
+      Paragraph_Buffer.Append (Self, Formatter.JSX.Make_Link (Text, URL, Self.In_Block_Tag));
    end URL_Link;
 
    -- Generate a picture.

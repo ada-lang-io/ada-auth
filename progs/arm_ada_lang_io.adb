@@ -367,10 +367,6 @@ package body ARM_Ada_Lang_IO is
    begin
       Debugging.Trace (Self, "Start_Paragraph: " & Debugging.Paragraph_To_String (New_Paragraph));
 
-      if Number /= "0" then
-         Immediate.Put_Line (Self, "<MarginText>" & Number & "</MarginText>");
-      end if;
-
       if Self.Mergable_Paragraph then
          if Can_Merge_Paragraphs (Self.Current_Paragraph.Style, New_Paragraph.Style) then
             Self.Being_Merged := True;
@@ -380,6 +376,10 @@ package body ARM_Ada_Lang_IO is
          end if;
       else
          Self.Being_Merged := False;
+      end if;
+
+      if Number /= "0" then
+         Immediate.Put_Line (Self, "<MarginText>" & Number & "</MarginText>");
       end if;
 
       Self.Current_Paragraph := New_Paragraph;

@@ -832,6 +832,7 @@ package body ARM_Ada_Lang_IO is
    procedure End_Hang_Item (Self : in out Ada_Lang_IO_Output_Type) is
    begin
       Debugging.Trace (Self, "End_Hang_Item");
+      Print_AI_References (Self);
       Immediate.Put_Line (Self, "<dt><br/>" & (+Self.Buffer) & "</dt>");
       Self.Buffer := SU.Null_Unbounded_String;
    end End_Hang_Item;

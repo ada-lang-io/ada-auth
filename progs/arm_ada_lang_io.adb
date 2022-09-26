@@ -407,7 +407,7 @@ package body ARM_Ada_Lang_IO is
          Self.Being_Merged := False;
       end if;
 
-      if Number /= "0" then
+      if Number /= "0" and Number /= "" then
          Immediate.Put_Line (Self, "<MarginText>" & Number & "</MarginText>");
       end if;
 

@@ -7,7 +7,7 @@ with Ada.Strings.Fixed;
 with Ada.Strings.Maps;
 with Ada.Strings.Unbounded;
 with Ada.Characters.Latin_1;
-with Ada.Containers.Indefinite_Vectors;
+with Ada.Containers.Indefinite_Ordered_Sets;
 use Ada.Text_IO;
 
 with Formatter.Clauses;  use Formatter.Clauses;
@@ -84,10 +84,28 @@ package body ARM_Ada_Lang_IO is
 
    subtype AI_Reference_Type is String;
 
-   package AI_Reference_Type_Vectors is new Ada.Containers.Indefinite_Vectors
-     (Positive, AI_Reference_Type);
+   function "<" (Left, Right : AI_Reference_Type) return Boolean is
+      function Order (Prefix : String) return Natural is
+        (if Prefix = "AI95" then 0
+         elsif Prefix = "SI99" then 1
+         elsif Prefix = "AI05" then 2
+         elsif Prefix = "AI12" then 3
+         else 4);
 
-   Current_AI_References : AI_Reference_Type_Vectors.Vector;
+      Order_Left  : constant Natural := Order (Left (Left'First .. Left'First + 3));
+      Order_Right : constant Natural := Order (Right (Right'First .. Right'First + 3));
+   begin
+      if Order_Left = Order_Right then
+         return Standard."<" (Left, Right);
+      else
+         return Order_Left < Order_Right;
+      end if;
+   end "<";
+
+   package AI_Reference_Type_Sets is new Ada.Containers.Indefinite_Ordered_Sets
+     (AI_Reference_Type);
+
+   Current_AI_References : AI_Reference_Type_Sets.Set;
 
    procedure Print_AI_References (Self : in out Ada_Lang_IO_Output_Type) is
       First : Boolean := True;
@@ -999,7 +1017,7 @@ package body ARM_Ada_Lang_IO is
 
       Paragraph_Buffer.Append (Self, Formatter.JSX.Wrap (Text));
 
-      Current_AI_References.Append (AI_Number);
+      Current_AI_References.Include (AI_Number);
 
       Self.Last_Was_AI_Reference := True;
    end AI_Reference;

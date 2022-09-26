@@ -13,12 +13,14 @@ with Formatter.Clauses;  use Formatter.Clauses;
 with Formatter.JSX;
 
 package body ARM_Ada_Lang_IO is
+   package SU renames Ada.Strings.Unbounded;
+
    --  Identifies code blocks requiring a <CodeBlock> tag.
    subtype Code_Block_Style is ARM_Output.Paragraph_Style_Type range ARM_Output.Examples .. ARM_Output.Small_Swiss_Examples;
    subtype Admonition_Style is ARM_Output.Paragraph_Style_Type range ARM_Output.Small .. ARM_Output.Small;
 
-   function "+"(S : Ada.Strings.Unbounded.Unbounded_String) return String renames Ada.Strings.Unbounded.To_String;
-   --  function "+"(S : String) renames Ada.Strings.Unbounded.To_Unbounded_String;
+   function "+"(S : SU.Unbounded_String) return String renames SU.To_String;
+   --  function "+"(S : String) renames SU.To_Unbounded_String;
 
    ----------------------------------------------------------------------------
 
@@ -31,18 +33,18 @@ package body ARM_Ada_Lang_IO is
    package body Paragraph_Buffer is
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; Char : Character) is
       begin
-         Ada.Strings.Unbounded.Append (Self.Buffer, Formatter.JSX.Safe_Char (Self.In_Block_Tag, Char));
+         SU.Append (Self.Buffer, Formatter.JSX.Safe_Char (Self.In_Block_Tag, Char));
       end Append;
 
       procedure Append (Self : in out Ada_Lang_IO_Output_Type; S : String) is
       begin
-         Ada.Strings.Unbounded.Append (Self.Buffer, S);
+         SU.Append (Self.Buffer, S);
       end Append;
 
       procedure Backspace (Self : in out Ada_Lang_IO_Output_Type; Count : Positive) is
-         Last_Index : constant Positive := Ada.Strings.Unbounded.Length (Self.Buffer);
+         Last_Index : constant Positive := SU.Length (Self.Buffer);
       begin
-         Self.Buffer := Ada.Strings.Unbounded.Delete (Self.Buffer, Last_Index - Count + 1, Last_Index);
+         Self.Buffer := SU.Delete (Self.Buffer, Last_Index - Count + 1, Last_Index);
       end Backspace;
    end Paragraph_Buffer;
 
@@ -167,7 +169,7 @@ package body ARM_Ada_Lang_IO is
          when ARM_Output.Bullet_Prefixed_Style_Subtype =>
             Immediate.Put_Line (Self, "</ul>");
          when others =>
-            if Ada.Strings.Unbounded.Index (Self.Buffer, "::=") /= 0 then
+            if SU.Index (Self.Buffer, "::=") /= 0 then
                Immediate.New_Line (Self);
                Immediate.Put_Line (Self, "</CodeBlock>");
             else
@@ -276,8 +278,8 @@ package body ARM_Ada_Lang_IO is
    is
       Dir : constant String := +Self.Output_Path & Directory_For_Clause (+Self.File_Prefix, "");
    begin
-      Self.File_Prefix := Ada.Strings.Unbounded.To_Unbounded_String (File_Prefix);
-      Self.Output_Path := Ada.Strings.Unbounded.To_Unbounded_String (Output_Path);
+      Self.File_Prefix := SU.To_Unbounded_String (File_Prefix);
+      Self.Output_Path := SU.To_Unbounded_String (Output_Path);
 
       Files.Start_File (Self, File_Prefix & "-Title.mdx", "", Title);
 
@@ -356,7 +358,7 @@ package body ARM_Ada_Lang_IO is
       New_Paragraph : constant Paragraph_Styling := (
          Style => Style,
          Indent => Indent,
-         Number => Ada.Strings.Unbounded.To_Unbounded_String (Number),
+         Number => SU.To_Unbounded_String (Number),
          No_Prefix => No_Prefix,
          Tab_Stops => Tab_Stops,
          No_Breaks => No_Breaks,
@@ -392,11 +394,11 @@ package body ARM_Ada_Lang_IO is
       Paragraph_Buffer.Append (Self, Ada.Characters.Latin_1.LF);
 
       -- Outputs the current buffer in the current format.
-      if not (for all X in 1 .. Ada.Strings.Unbounded.Length (Self.Buffer)
-               => Ada.Strings.Unbounded.Element (Self.Buffer, X) = ' ')
+      if not (for all X in 1 .. SU.Length (Self.Buffer)
+               => SU.Element (Self.Buffer, X) = ' ')
       then
          -- Ignore glossary definitions
-         if Ada.Strings.Unbounded.Index (Self.Buffer, "Version=") /= 1 then
+         if SU.Index (Self.Buffer, "Version=") /= 1 then
             if not Self.Being_Merged then
                case Self.Current_Paragraph.Style is
                   when Code_Block_Style =>
@@ -413,7 +415,7 @@ package body ARM_Ada_Lang_IO is
                   when ARM_Output.Bullet_Prefixed_Style_Subtype =>
                      Immediate.Put_Line (Self, "<ul>");
                   when others =>
-                     if Ada.Strings.Unbounded.Index (Self.Buffer, "::=") /= 0 then
+                     if SU.Index (Self.Buffer, "::=") /= 0 then
                         Immediate.New_Line (Self);
                         Immediate.Put_Line (Self, "<CodeBlock>");
                         Self.Current_Paragraph.Style := ARM_Output.Examples;
@@ -448,7 +450,7 @@ package body ARM_Ada_Lang_IO is
          end if;
       end if;
 
-      Self.Buffer := Ada.Strings.Unbounded.Null_Unbounded_String;
+      Self.Buffer := SU.Null_Unbounded_String;
       Self.Admonition_Format := Note;
 
       Debugging.Trace (Self, "End_Paragraph");
@@ -602,7 +604,7 @@ package body ARM_Ada_Lang_IO is
    procedure Ordinary_Text
      (Self : in out Ada_Lang_IO_Output_Type; Text : in String)
    is
-      use type Ada.Strings.Unbounded.Unbounded_String;
+      use type SU.Unbounded_String;
    begin
       --  If this isn't an admonition, then output it.
       Self.Last_Was_AI_Reference := False;
@@ -785,7 +787,7 @@ package body ARM_Ada_Lang_IO is
    begin
       Debugging.Trace (Self, "End_Hang_Item");
       Immediate.Put_Line (Self, "<dt><br/>" & (+Self.Buffer) & "</dt>");
-      Self.Buffer := Ada.Strings.Unbounded.Null_Unbounded_String;
+      Self.Buffer := SU.Null_Unbounded_String;
    end End_Hang_Item;
 
    -- Change the text format so that all of the properties are as specified.
@@ -796,7 +798,7 @@ package body ARM_Ada_Lang_IO is
      (Self : in out Ada_Lang_IO_Output_Type;
       Format : in ARM_Output.Format_Type)
    is
-      use type Ada.Strings.Unbounded.Unbounded_String;
+      use type SU.Unbounded_String;
       use type ARM_Output.Font_Family_Type;
       use type ARM_Output.Format_Type;
    begin
@@ -809,13 +811,13 @@ package body ARM_Ada_Lang_IO is
       -- formatting to know if we're in one or not.
       for Admonition in Admonition_Type loop
          declare
-            Admonition_Index : constant Natural := Ada.Strings.Unbounded.Index (Self.Buffer, Admonition_Texts (Admonition).all);
+            Admonition_Index : constant Natural := SU.Index (Self.Buffer, Admonition_Texts (Admonition).all);
          begin
             if Admonition_Index /= 0 then
                Self.Admonition_Format := Admonition;
 
                -- Assume admonition was immediately before the formatting.
-               Self.Buffer := Ada.Strings.Unbounded.Unbounded_Slice (Self.Buffer, 1, Admonition_Index - 1);
+               Self.Buffer := SU.Unbounded_Slice (Self.Buffer, 1, Admonition_Index - 1);
             end if;
          end;
       end loop;
@@ -889,7 +891,7 @@ package body ARM_Ada_Lang_IO is
       --  Debugging.Trace (Self, "Clause Number: " & Clause_Number);
 
       -- Ignore this by consuming the buffer.
-      --  Self.Buffer := Ada.Strings.Unbounded.Null_Unbounded_String;
+      --  Self.Buffer := SU.Null_Unbounded_String;
 
       Paragraph_Buffer.Append (Self, Formatter.JSX.Make_Link (Text, Relative_Link_Path (Self) & Make_Clause_Anchor (+Self.File_Prefix, Formatter.Clauses.Simplify_Clause_Number (Clause_Number)), Self.In_Block_Tag));
    end Clause_Reference;

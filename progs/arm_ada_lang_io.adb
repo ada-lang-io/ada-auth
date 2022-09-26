@@ -661,10 +661,6 @@ package body ARM_Ada_Lang_IO is
          Self.Last_Was_AI_Reference := False;
       end if;
 
-      if not Self.In_Block_Tag and Char = Ada.Characters.Latin_1.LF then
-         Print_AI_References (Self);
-      end if;
-
       Paragraph_Buffer.Append (Self, Char);
 
       if Char = '}'

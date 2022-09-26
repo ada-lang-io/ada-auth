@@ -7,6 +7,7 @@ with Ada.Strings.Fixed;
 with Ada.Strings.Maps;
 with Ada.Strings.Unbounded;
 with Ada.Characters.Latin_1;
+with Ada.Containers.Indefinite_Vectors;
 use Ada.Text_IO;
 
 with Formatter.Clauses;  use Formatter.Clauses;
@@ -78,6 +79,32 @@ package body ARM_Ada_Lang_IO is
          New_Line (Self.Current_File, Count);
       end New_Line;
    end Immediate;
+
+   ----------------------------------------------------------------------------
+
+   subtype AI_Reference_Type is String;
+
+   package AI_Reference_Type_Vectors is new Ada.Containers.Indefinite_Vectors
+     (Positive, AI_Reference_Type);
+
+   Current_AI_References : AI_Reference_Type_Vectors.Vector;
+
+   procedure Print_AI_References (Self : in out Ada_Lang_IO_Output_Type) is
+      First : Boolean := True;
+   begin
+      if not Current_AI_References.Is_Empty then
+         Immediate.Put (Self, "<MarginInfo items={[");
+         for Reference of Current_AI_References loop
+            if not First then
+               Immediate.Put (Self, ", ");
+            end if;
+            Immediate.Put (Self, """" & Reference & """");
+            First := False;
+         end loop;
+         Immediate.Put (Self, "]} />");
+      end if;
+      Current_AI_References.Clear;
+   end Print_AI_References;
 
    ----------------------------------------------------------------------------
 
@@ -391,6 +418,7 @@ package body ARM_Ada_Lang_IO is
 
    procedure End_Paragraph (Self : in out Ada_Lang_IO_Output_Type) is
    begin
+      Print_AI_References (Self);
       Paragraph_Buffer.Append (Self, Ada.Characters.Latin_1.LF);
 
       -- Outputs the current buffer in the current format.
@@ -632,7 +660,11 @@ package body ARM_Ada_Lang_IO is
          Self.Last_Was_AI_Reference := False;
       end if;
 
-      Paragraph_Buffer.Append (Self, Formatter.JSX.Safe_Char (Self.In_Block_Tag, Char));
+      if not Self.In_Block_Tag and Char = Ada.Characters.Latin_1.LF then
+         Print_AI_References (Self);
+      end if;
+
+      Paragraph_Buffer.Append (Self, Char);
 
       if Char = '}'
          and then Self.Last_Was_AI_Reference
@@ -640,7 +672,6 @@ package body ARM_Ada_Lang_IO is
       then
          Line_Break (Self);
       end if;
-
    end Ordinary_Character;
 
    procedure Hard_Space (Self : in out Ada_Lang_IO_Output_Type) is
@@ -970,6 +1001,8 @@ package body ARM_Ada_Lang_IO is
       end if;
 
       Paragraph_Buffer.Append (Self, Formatter.JSX.Wrap (Text));
+
+      Current_AI_References.Append (AI_Number);
 
       Self.Last_Was_AI_Reference := True;
    end AI_Reference;

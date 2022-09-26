@@ -102,6 +102,7 @@ package body ARM_Ada_Lang_IO is
             First := False;
          end loop;
          Immediate.Put (Self, "]} />");
+         Immediate.New_Line (Self);
       end if;
       Current_AI_References.Clear;
    end Print_AI_References;

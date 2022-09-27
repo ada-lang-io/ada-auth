@@ -270,7 +270,8 @@ package body ARM_Ada_Lang_IO is
          Clause_Number : String;
          Header_Text : String)
       is
-         Dir : constant String := +Self.Output_Path & Directory_For_Clause (+Self.File_Prefix, Clause_Number);
+         Subdir : constant String := Directory_For_Clause (+Self.File_Prefix, Clause_Number);
+         Dir : constant String := +Self.Output_Path & Subdir;
       begin
          Close_File (Self);
 
@@ -286,7 +287,11 @@ package body ARM_Ada_Lang_IO is
 
          Make_New_Sidebar (Self);
 
-         Put_Heading (Self, "# " & Clause_Number & " " & Header_Text);
+         if Subdir /= "" then
+            Put_Heading (Self, "# " & Clause_Number & " " & Header_Text);
+         else
+            Put_Heading (Self, "# " & Header_Text);
+         end if;
 
          Print_Manual_Warning (Self);
          Include_React_Elements (Self);
@@ -294,7 +299,7 @@ package body ARM_Ada_Lang_IO is
          Self.Mergable_Paragraph := False;
          Self.Being_Merged := False;
       end Start_File;
-      
+
       procedure Close_File (Self : in out Ada_Lang_IO_Output_Type) is
       begin
          -- Close previous file (if exists)

@@ -327,7 +327,7 @@ package body ARM_Ada_Lang_IO is
       Self.File_Prefix := SU.To_Unbounded_String (File_Prefix);
       Self.Output_Path := SU.To_Unbounded_String (Output_Path);
 
-      Files.Start_File (Self, File_Prefix & "-Title.mdx", "", Title);
+      Files.Start_File (Self, "index.mdx", "", Title);
 
       Self.Verbose := Verbose;
    end Create;
@@ -547,6 +547,7 @@ package body ARM_Ada_Lang_IO is
    begin
       case Level is
          when ARM_Contents.Section
+         | ARM_Contents.Unnumbered_Section
          | ARM_Contents.Plain_Annex
          | ARM_Contents.Informative_Annex
          | ARM_Contents.Normative_Annex =>
@@ -559,7 +560,7 @@ package body ARM_Ada_Lang_IO is
          when ARM_Contents.Subsubclause =>
             Make_Clause_Target (Self, Clause_Number);
             Put_Heading (Self, "### " & Clause_Number & "  " & Header_Text);
-         when others =>
+         when ARM_Contents.Dead_Clause =>
             null;
       end case;
    end Clause_Header;

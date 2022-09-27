@@ -5,5 +5,5 @@ set -euo pipefail
 alr build
 pushd source/
 mkdir -p output/
-../.obj/arm_form aa-aarm.msm Ada_Lang_IO New-Changes 5 5 "/Users/paul/dev/ada/ada-lang-io/docs/arm/"
+../.obj/arm_form aa-aarm.msm Ada_Lang_IO New-Changes 5 5 ../../ada-lang-io/docs/arm/
 popd

@@ -32,10 +32,9 @@ package body Formatter.Clauses is
       File_Prefix : String;
       Clause_Number : String)
    return String is
+      Level : constant String := Find_Top_Level_Clause (Simplify_Clause_Number (Clause_Number));
    begin
-      return (if Clause_Number /= ""
-         then File_Prefix & "-" & Find_Top_Level_Clause (Simplify_Clause_Number (Clause_Number)) & "/"
-         else "");
+      return (if Clause_Number /= "" and Level /= "0" then File_Prefix & "-" & Level & "/" else "");
    end Directory_For_Clause;
 
    function Make_Clause_File_Stem (

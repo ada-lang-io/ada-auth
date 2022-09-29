@@ -1010,23 +1010,9 @@ package body ARM_Ada_Lang_IO is
      (Self : in out Ada_Lang_IO_Output_Type;
       Text : in String;
       AI_Number : in String)
-   is begin
-      --  Debugging.Trace (Self, "AI_Reference");
-      --  Debugging.Trace (Self, "Text: " & Text);
-      --  Debugging.Trace (Self, "AI_Number: " & AI_Number);
-      --  Paragraph_Buffer.Append (Self, (if Self.In_Block_Tag then Wrap (Text) else Text));
-
-      if Self.Current_Paragraph.Style in Code_Block_Style then
-         Paragraph_Buffer.Backspace (Self, 5);  -- Delete the previously emitted {"{"}
-         Paragraph_Buffer.Append (Self, "--  ");
-         Ordinary_Character (Self, '{');
-      end if;
-
-      Paragraph_Buffer.Append (Self, Formatter.JSX.Wrap (Text));
-
+   is
+   begin
       Current_AI_References.Include (AI_Number);
-
-      Self.Last_Was_AI_Reference := True;
    end AI_Reference;
 
    -- Generate a local target. This marks the potential target of local

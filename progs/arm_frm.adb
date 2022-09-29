@@ -13,6 +13,12 @@ with ARM_Output,
      Ada.Characters.Handling,
      Ada.Strings.Fixed;
 pragma Elaborate_All (ARM_Database);
+
+with ARM_Ada_Lang_IO;
+-- It's very ugly that we have coupling with ARM_Ada_Lang_IO, but
+-- procedure Make_References is sitting on the chair of the formatter
+-- (Output_Object).
+
 package body ARM_Format is
 
     --
@@ -988,6 +994,8 @@ Ada.Text_IO.Put_Line ("%% Oops, can't find end of item chg new command, line " &
 	-- Deallocate the references on List; List will be null afterwards.
 	Temp : Reference_Ptr;
 	Our_Text_Format : ARM_Output.Format_Type;
+      Is_Ada_Lang_Formatter : constant Boolean :=
+        Output_Object in ARM_Ada_Lang_IO.Ada_Lang_IO_Output_Type'Class;
     begin
 	-- We assume these are only stored here if we want to see them
 	-- on *this* paragraph. Thus, we just output them if they exist
@@ -998,12 +1006,14 @@ Ada.Text_IO.Put_Line ("%% Oops, can't find end of item chg new command, line " &
 	while List /= null loop
 	    -- Output a reference. These are *never* marked as
 	    -- inserted or deleted, so set the style properly.
-	    ARM_Output.Text_Format (Output_Object,
-				    Format => Our_Text_Format);
-	    ARM_Output.Ordinary_Character (Output_Object, '{');
-	    Our_Text_Format.Italic := True;
-	    ARM_Output.Text_Format (Output_Object,
-				    Format => Our_Text_Format);
+      if List.Is_DR_Ref and Is_Ada_Lang_Formatter then
+          ARM_Output.Text_Format (Output_Object,
+                   Format => Our_Text_Format);
+          ARM_Output.Ordinary_Character (Output_Object, '{');
+          Our_Text_Format.Italic := True;
+          ARM_Output.Text_Format (Output_Object,
+                   Format => Our_Text_Format);
+      end if;
 	    if List.Is_DR_Ref then
 	        -- Output a DR reference.
 	        ARM_Output.DR_Reference (Output_Object,
@@ -1015,15 +1025,17 @@ Ada.Text_IO.Put_Line ("%% Oops, can't find end of item chg new command, line " &
 					 Text => List.Ref_Name(1..List.Ref_Len),
 					 AI_Number => List.Ref_Name(1..List.Ref_Len));
 	    end if;
-	    Our_Text_Format.Italic := Format_Object.Text_Format.Italic;
-	    ARM_Output.Text_Format (Output_Object,
-				    Format => Our_Text_Format);
-	    ARM_Output.Ordinary_Character (Output_Object, '}');
-	    ARM_Output.Ordinary_Character (Output_Object, ' ');
-	    -- Reset to the current format.
-	    ARM_Output.Text_Format (Output_Object,
-				    Format => Format_Object.Text_Format);
-	    Format_Object.Last_Non_Space := False;
+       if List.Is_DR_Ref and Is_Ada_Lang_Formatter then
+          Our_Text_Format.Italic := Format_Object.Text_Format.Italic;
+          ARM_Output.Text_Format (Output_Object,
+                   Format => Our_Text_Format);
+          ARM_Output.Ordinary_Character (Output_Object, '}');
+          ARM_Output.Ordinary_Character (Output_Object, ' ');
+          -- Reset to the current format.
+          ARM_Output.Text_Format (Output_Object,
+                   Format => Format_Object.Text_Format);
+          Format_Object.Last_Non_Space := False;
+      end if;
 
 	    Temp := List;
 	    List := List.Next;

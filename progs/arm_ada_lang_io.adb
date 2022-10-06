@@ -16,9 +16,12 @@ with Formatter.JSX;
 package body ARM_Ada_Lang_IO is
    package SU renames Ada.Strings.Unbounded;
 
+   use all type ARM_Output.Paragraph_Style_Type;
+
    --  Identifies code blocks requiring a <CodeBlock> tag.
    subtype Code_Block_Style is ARM_Output.Paragraph_Style_Type range ARM_Output.Examples .. ARM_Output.Small_Swiss_Examples;
-   subtype Admonition_Style is ARM_Output.Paragraph_Style_Type range ARM_Output.Small .. ARM_Output.Small;
+   subtype Annotation_Style is ARM_Output.Paragraph_Style_Type
+     with Static_Predicate => Annotation_Style in Small | Small_Wide_Above | Small_Examples;
 
    function "+" (S : SU.Unbounded_String) return String renames SU.To_String;
    function "+" (S : String) return SU.Unbounded_String renames SU.To_Unbounded_String;
@@ -221,7 +224,6 @@ package body ARM_Ada_Lang_IO is
          when ARM_Output.Small
          | ARM_Output.Small_Wide_Above =>
             Immediate.Put_Line (Self, "</Admonition>");
-            Immediate.Put_Line (Self, "</AnnotatedOnly>");
          when ARM_Output.Text_Prefixed_Style_Subtype =>
             Immediate.Put_Line (Self, "</dl>");
          when ARM_Output.Bullet_Prefixed_Style_Subtype =>
@@ -234,6 +236,10 @@ package body ARM_Ada_Lang_IO is
                Immediate.Put_Line (Self, "</p>");
             end if;
       end case;
+
+      if Style in Annotation_Style then
+         Immediate.Put_Line (Self, "</AnnotatedOnly>");
+      end if;
 
       Self.Last_Was_AI_Reference := False;
       Self.Mergable_Paragraph := False;
@@ -443,6 +449,10 @@ package body ARM_Ada_Lang_IO is
          Self.Being_Merged := False;
       end if;
 
+      if not Self.Being_Merged and Style in Annotation_Style then
+         Immediate.Put_Line (Self, "<AnnotatedOnly>");
+      end if;
+
       if Number /= "0" and Number /= "" then
          Self.Paragraph_Number := +Number;
       else
@@ -457,14 +467,7 @@ package body ARM_Ada_Lang_IO is
    procedure End_Paragraph (Self : in out Ada_Lang_IO_Output_Type) is
       Is_Glossary_Definition : constant Boolean :=
          SU.Index (Self.Buffer, "Version=") = 1;
-
-      Is_Admonition : constant Boolean :=
-        Self.Current_Paragraph.Style in ARM_Output.Small | ARM_Output.Small_Wide_Above;
    begin
-      if not Self.Being_Merged and not Is_Glossary_Definition and Is_Admonition then
-         Immediate.Put_Line (Self, "<AnnotatedOnly>");
-      end if;
-
       Print_Paragraph_Number (Self);
       Print_AI_References (Self);
 

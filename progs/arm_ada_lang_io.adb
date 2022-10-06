@@ -246,15 +246,27 @@ package body ARM_Ada_Lang_IO is
       Self.Being_Merged := False;
    end End_Paragraph_Style;
 
-   procedure Put_Heading (Self : in out Ada_Lang_IO_Output_Type; S : String) is
+   procedure Put_Heading
+     (Self         : in out Ada_Lang_IO_Output_Type;
+      Text         : String;
+      Is_Annotated : Boolean := False)
+   is
    begin
       if Self.Mergable_Paragraph then
          End_Paragraph_Style (Self, Self.Current_Paragraph.Style);
       end if;
 
+      if Is_Annotated then
+         Immediate.Put_Line (Self, "<AnnotatedOnly>");
+      end if;
+
       Immediate.New_Line (Self);
-      Immediate.Put_Line (Self, S);
+      Immediate.Put_Line (Self, Text);
       Immediate.New_Line (Self);
+
+      if Is_Annotated then
+         Immediate.Put_Line (Self, "</AnnotatedOnly>");
+      end if;
    end Put_Heading;
 
    -- Make an id to jump to if there's an appropriate subclause which can be
@@ -542,10 +554,27 @@ package body ARM_Ada_Lang_IO is
    -- Raises Not_Valid_Error if in a paragraph.
    procedure Category_Header (
       Self : in out Ada_Lang_IO_Output_Type;
-      Header_Text : String
-   ) is
+      Header_Text : String)
+   is
+      Is_Annotated_Header : constant Boolean := Header_Text in
+         "Extensions to Ada 83" |
+         "Extensions to Ada 95" |
+         "Extensions to Ada 2005" |
+         "Extensions to Ada 2012" |
+         "Wording Changes from Ada 83" |
+         "Wording Changes from Ada 95" |
+         "Wording Changes from Ada 2005" |
+         "Wording Changes from Ada 2012" |
+         "Incompatibilities With Ada 83" |
+         "Incompatibilities With Ada 95" |
+         "Incompatibilities With Ada 2005" |
+         "Incompatibilities With Ada 2012" |
+         "Inconsistencies With Ada 83" |
+         "Inconsistencies With Ada 95" |
+         "Inconsistencies With Ada 2005" |
+         "Inconsistencies With Ada 2012";
    begin
-      Put_Heading (Self, "#### " & Header_Text);
+      Put_Heading (Self, "#### " & Header_Text, Is_Annotated => Is_Annotated_Header);
    end Category_Header;
 
    -- Output a Clause header. The level of the header is specified

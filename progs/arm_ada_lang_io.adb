@@ -202,7 +202,7 @@ package body ARM_Ada_Lang_IO is
 
       procedure Trace (Self : in out Ada_Lang_IO_Output_Type; S : String) is
       begin
-         --  Put_Line (Self, "@@@ " & S);
+--         Put_Line (Self.Current_File, "@@@ " & S);
          pragma Unreferenced (Self);
          pragma Unreferenced (S);
       end Trace;

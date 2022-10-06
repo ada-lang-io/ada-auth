@@ -460,7 +460,6 @@ package body ARM_Ada_Lang_IO is
                      Immediate.Put_Line (Self, "<Admonition "
                         & "type=""aarm"""
                         & " aarm=""" & Admonition_Output (Self.Admonition_Format).all & """"
-                        & " title=""" & Admonition_Texts (Self.Admonition_Format).all & """"
                         & ">");
                   when ARM_Output.Text_Prefixed_Style_Subtype =>
                      Immediate.Put_Line (Self, "<dl>");

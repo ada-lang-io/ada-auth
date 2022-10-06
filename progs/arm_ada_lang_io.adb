@@ -21,7 +21,7 @@ package body ARM_Ada_Lang_IO is
    --  Identifies code blocks requiring a <CodeBlock> tag.
    subtype Code_Block_Style is ARM_Output.Paragraph_Style_Type range ARM_Output.Examples .. ARM_Output.Small_Swiss_Examples;
    subtype Annotation_Style is ARM_Output.Paragraph_Style_Type
-     with Static_Predicate => Annotation_Style in Small | Small_Wide_Above | Small_Examples;
+     with Static_Predicate => Annotation_Style in Small | Small_Wide_Above | Small_Examples | Small_Bulleted | Small_Nested_Bulleted | Small_Enumerated;
 
    function "+" (S : SU.Unbounded_String) return String renames SU.To_String;
    function "+" (S : String) return SU.Unbounded_String renames SU.To_Unbounded_String;

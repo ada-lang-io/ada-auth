@@ -221,6 +221,7 @@ package body ARM_Ada_Lang_IO is
          when ARM_Output.Small
          | ARM_Output.Small_Wide_Above =>
             Immediate.Put_Line (Self, "</Admonition>");
+            Immediate.Put_Line (Self, "</AnnotatedOnly>");
          when ARM_Output.Text_Prefixed_Style_Subtype =>
             Immediate.Put_Line (Self, "</dl>");
          when ARM_Output.Bullet_Prefixed_Style_Subtype =>
@@ -454,17 +455,25 @@ package body ARM_Ada_Lang_IO is
    end Start_Paragraph;
 
    procedure End_Paragraph (Self : in out Ada_Lang_IO_Output_Type) is
+      Is_Glossary_Definition : constant Boolean :=
+         SU.Index (Self.Buffer, "Version=") = 1;
+
+      Is_Admonition : constant Boolean :=
+        Self.Current_Paragraph.Style in ARM_Output.Small | ARM_Output.Small_Wide_Above;
    begin
+      if not Self.Being_Merged and not Is_Glossary_Definition and Is_Admonition then
+         Immediate.Put_Line (Self, "<AnnotatedOnly>");
+      end if;
+
       Print_Paragraph_Number (Self);
       Print_AI_References (Self);
+
       Paragraph_Buffer.Append (Self, Ada.Characters.Latin_1.LF);
 
       -- Outputs the current buffer in the current format.
-      if not (for all X in 1 .. SU.Length (Self.Buffer)
-               => SU.Element (Self.Buffer, X) = ' ')
-      then
+      if True then
          -- Ignore glossary definitions
-         if SU.Index (Self.Buffer, "Version=") /= 1 then
+         if not Is_Glossary_Definition then
             if not Self.Being_Merged then
                case Self.Current_Paragraph.Style is
                   when Code_Block_Style =>

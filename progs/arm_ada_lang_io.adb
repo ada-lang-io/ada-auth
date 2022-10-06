@@ -20,8 +20,8 @@ package body ARM_Ada_Lang_IO is
    subtype Code_Block_Style is ARM_Output.Paragraph_Style_Type range ARM_Output.Examples .. ARM_Output.Small_Swiss_Examples;
    subtype Admonition_Style is ARM_Output.Paragraph_Style_Type range ARM_Output.Small .. ARM_Output.Small;
 
-   function "+"(S : SU.Unbounded_String) return String renames SU.To_String;
-   --  function "+"(S : String) renames SU.To_Unbounded_String;
+   function "+" (S : SU.Unbounded_String) return String renames SU.To_String;
+   function "+" (S : String) return SU.Unbounded_String renames SU.To_Unbounded_String;
 
    ----------------------------------------------------------------------------
 
@@ -124,6 +124,17 @@ package body ARM_Ada_Lang_IO is
       end if;
       Current_AI_References.Clear;
    end Print_AI_References;
+
+   ----------------------------------------------------------------------------
+
+   procedure Print_Paragraph_Number (Self : in out Ada_Lang_IO_Output_Type) is
+      use type SU.Unbounded_String;
+   begin
+      if Self.Paragraph_Number /= SU.Null_Unbounded_String then
+         Immediate.Put_Line (Self, "<MarginText>" & (+Self.Paragraph_Number) & "</MarginText>");
+         Self.Paragraph_Number := SU.Null_Unbounded_String;
+      end if;
+   end Print_Paragraph_Number;
 
    ----------------------------------------------------------------------------
 
@@ -432,7 +443,9 @@ package body ARM_Ada_Lang_IO is
       end if;
 
       if Number /= "0" and Number /= "" then
-         Immediate.Put_Line (Self, "<MarginText>" & Number & "</MarginText>");
+         Self.Paragraph_Number := +Number;
+      else
+         Self.Paragraph_Number := SU.Null_Unbounded_String;
       end if;
 
       Self.Current_Paragraph := New_Paragraph;
@@ -442,6 +455,7 @@ package body ARM_Ada_Lang_IO is
 
    procedure End_Paragraph (Self : in out Ada_Lang_IO_Output_Type) is
    begin
+      Print_Paragraph_Number (Self);
       Print_AI_References (Self);
       Paragraph_Buffer.Append (Self, Ada.Characters.Latin_1.LF);
 
@@ -837,6 +851,7 @@ package body ARM_Ada_Lang_IO is
    procedure End_Hang_Item (Self : in out Ada_Lang_IO_Output_Type) is
    begin
       Debugging.Trace (Self, "End_Hang_Item");
+      Print_Paragraph_Number (Self);
       Print_AI_References (Self);
       Immediate.Put_Line (Self, "<dt><br/>" & (+Self.Buffer) & "</dt>");
       Self.Buffer := SU.Null_Unbounded_String;

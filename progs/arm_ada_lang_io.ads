@@ -329,7 +329,8 @@ package ARM_Ada_Lang_IO is
    procedure URL_Link(
       Self : in out Ada_Lang_IO_Output_Type;
       Text : in String;
-      URL  : in String);
+      URL  : in String;
+      All_Formats : in Boolean);
 
    -- Generate a picture.
    -- Name is the (simple) file name of the picture; Descr is a

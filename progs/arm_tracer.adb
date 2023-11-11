@@ -570,12 +570,16 @@ package body ARM_Tracer is
    -- For hyperlinked formats, this should generate a link;
    -- for other formats, only the text is generated.
    procedure URL_Link
-     (Self : in out Tracer_Output_Type; Text : in String; URL : in String)
+     (Self : in out Tracer_Output_Type;
+      Text : in String;
+      URL  : in String;
+      All_Formats : in Boolean)
    is
    begin
       Func (Self, "URL_Link");
       Prop ("Text: " & Text);
       Prop ("URL: " & URL);
+      Prop ("All_Formats: " & All_Formats'Image);
    end URL_Link;
 
    -- Generate a picture.

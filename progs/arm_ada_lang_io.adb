@@ -1148,7 +1148,8 @@ package body ARM_Ada_Lang_IO is
    procedure URL_Link
      (Self : in out Ada_Lang_IO_Output_Type;
       Text : in String;
-      URL : in String)
+      URL : in String;
+      All_Formats : in Boolean)
    is
    begin
       Debugging.Trace (Self, "URL_Link");

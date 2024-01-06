@@ -479,6 +479,7 @@ package body ARM_Ada_Lang_IO is
    procedure End_Paragraph (Self : in out Ada_Lang_IO_Output_Type) is
       Is_Glossary_Definition : constant Boolean :=
          SU.Index (Self.Buffer, "Version=") = 1;
+      use type ARM_Output.Paragraph_Indent_Type;
    begin
       Print_Paragraph_Number (Self);
       Print_AI_References (Self);
@@ -510,6 +511,12 @@ package body ARM_Ada_Lang_IO is
                         Self.Current_Paragraph.Style := ARM_Output.Examples;
                         Self.Mergable_Paragraph := Is_Mergable_Paragraph (Self.Current_Paragraph.Style);
                         Self.In_Block_Tag := Self.Current_Paragraph.Style in Code_Block_Style;
+                     elsif Self.Current_Paragraph.Indent /= 0 then
+                        Immediate.Put (Self, "<p class=""Indented" &
+                                         Ada.Strings.Fixed.Trim
+                                           (ARM_Output.Paragraph_Indent_Type'Image
+                                           (Self.Current_Paragraph.Indent * 2),
+                                            Side => Ada.Strings.Left) & """>");
                      else
                         Immediate.Put (Self, "<p>");
                      end if;

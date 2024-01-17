@@ -216,7 +216,7 @@ package body ARM_Tracer is
       Prop ("Level:         " & Level'Image);
       Prop ("Clause Number: " & Clause_Number);
       Prop ("Top Level Subdivision Name: " & Top_Level_Subdivision_Name'Image);
-      Trace (Clause_Number & Header_Text);
+      Trace ("Clause: " & Clause_Number & " " & Header_Text);
    end Clause_Header;
 
    procedure Revised_Clause_Header

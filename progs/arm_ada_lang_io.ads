@@ -421,6 +421,7 @@ private
 
       Buffer : Ada.Strings.Unbounded.Unbounded_String;
       Current_Format : ARM_Output.Format_Type := (others => <>);
+      Current_Subclause : Ada.Strings.Unbounded.Unbounded_String;
       Current_Paragraph : Paragraph_Styling;
       Paragraph_Number : Ada.Strings.Unbounded.Unbounded_String;
       Verbose : Boolean := True;

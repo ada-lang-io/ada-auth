@@ -130,11 +130,21 @@ package body ARM_Ada_Lang_IO is
 
    ----------------------------------------------------------------------------
 
+   -- The same paragraph number can appear on a page with multiple subclauses.
+   function Paragraph_Number_Anchor (Self : Ada_Lang_IO_Output_Type) return String is
+   begin
+      if SU.Length(Self.Current_Subclause) = 0 then
+         return SU.To_String(Self.Paragraph_Number);
+      else
+         return SU.To_String(Self.Paragraph_Number) & "_" & SU.To_String(Self.Current_Subclause);
+      end if;
+   end Paragraph_Number_Anchor;
+
    procedure Print_Paragraph_Number (Self : in out Ada_Lang_IO_Output_Type) is
       use type SU.Unbounded_String;
    begin
       if Self.Paragraph_Number /= SU.Null_Unbounded_String then
-         Immediate.Put_Line (Self, "<MarginText>" & (+Self.Paragraph_Number) & "</MarginText>");
+         Immediate.Put_Line (Self, "<MarginText>" & Self.Paragraph_Number_Anchor & "</MarginText>");
          Self.Paragraph_Number := SU.Null_Unbounded_String;
       end if;
    end Print_Paragraph_Number;
@@ -293,7 +303,7 @@ package body ARM_Ada_Lang_IO is
       procedure Close_File (Self : in out Ada_Lang_IO_Output_Type);
    end Files;
 
-   package body Files is   
+   package body Files is
       procedure Start_File (
          Self : in out Ada_Lang_IO_Output_Type;
          File_Name : String;
@@ -617,10 +627,13 @@ package body ARM_Ada_Lang_IO is
          | ARM_Contents.Plain_Annex
          | ARM_Contents.Informative_Annex
          | ARM_Contents.Normative_Annex =>
+            Self.Current_Subclause := Ada.Strings.Unbounded.Null_Unbounded_String;
             Files.Start_File (Self, File_Name, Clause_Number, Header_Text);
          when ARM_Contents.Clause =>
+            Self.Current_Subclause := Ada.Strings.Unbounded.Null_Unbounded_String;
             Files.Start_File (Self, "AA-" & Clause_Number & ".mdx", Clause_Number, Header_Text);
          when ARM_Contents.Subclause =>
+            Self.Current_Subclause := +Clause_Number;
             Make_Clause_Target (Self, Clause_Number);
             Put_Heading (Self, "## " & Clause_Number & "  " & Header_Text);
          when ARM_Contents.Subsubclause =>

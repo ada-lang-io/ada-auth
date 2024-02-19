@@ -233,6 +233,7 @@ package body ARM_Ada_Lang_IO is
             Immediate.Put_Line (Self, "</CodeBlock>");
          when ARM_Output.Small
          | ARM_Output.Small_Wide_Above =>
+            Immediate.New_Line (Self);
             Immediate.Put_Line (Self, "</Admonition>");
          when ARM_Output.Text_Prefixed_Style_Subtype =>
             Immediate.Put_Line (Self, "</dl>");

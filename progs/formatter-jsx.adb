@@ -11,6 +11,10 @@ package body Formatter.JSX is
          when '>' => return Wrap (">");
          when '{' => return Wrap ("{");
          when '}' => return Wrap ("}");
+         when '*' => return Wrap ("*");
+         when '$' => return Wrap ("$");
+         when '#' => return Wrap ("#");
+         when '_' => return Wrap ("_");
          when Ada.Characters.Latin_1.LF => return (if In_Block_Tag then Wrap ("\n") else "<br />");
          when others => return Ada.Strings.UTF_Encoding.Strings.Encode ((1 => Char));
       end case;

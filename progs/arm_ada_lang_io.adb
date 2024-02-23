@@ -290,8 +290,8 @@ package body ARM_Ada_Lang_IO is
       end if;
    end Make_Clause_Target;
 
-   function Relative_Link_Path (Self : in out Ada_Lang_IO_Output_Type) return String is
-      (if Self.In_Front_Matter then "" else "../");
+   function Local_Link_Path (Self : in out Ada_Lang_IO_Output_Type) return String is
+      (if Self.In_Front_Matter then "" else "/docs/arm/");
 
    ----------------------------------------------------------------------------
 
@@ -1022,7 +1022,7 @@ package body ARM_Ada_Lang_IO is
       -- Ignore this by consuming the buffer.
       --  Self.Buffer := SU.Null_Unbounded_String;
 
-      Paragraph_Buffer.Append (Self, Formatter.JSX.Make_Link (Text, Relative_Link_Path (Self) & Make_Clause_Anchor (+Self.File_Prefix, Formatter.Clauses.Simplify_Clause_Number (Clause_Number)), Self.In_Block_Tag));
+      Paragraph_Buffer.Append (Self, Formatter.JSX.Make_Link (Text, Local_Link_Path (Self) & Make_Clause_Anchor (+Self.File_Prefix, Formatter.Clauses.Simplify_Clause_Number (Clause_Number)), Self.In_Block_Tag));
    end Clause_Reference;
 
    -- Generate a index target. This marks the location where an index
@@ -1124,7 +1124,7 @@ package body ARM_Ada_Lang_IO is
       --  Debugging.Trace (Self, "Target: " & Target);
       --  Debugging.Trace (Self, "Clause Number: " & Clause_Number);
 
-      Paragraph_Buffer.Append (Self, Formatter.JSX.Make_Link (Text, Relative_Link_Path (Self) & Make_Clause_File_Name (+Self.File_Prefix, Clause_Number) & "#" & Target, Self.In_Block_Tag));
+      Paragraph_Buffer.Append (Self, Formatter.JSX.Make_Link (Text, Local_Link_Path (Self) & Make_Clause_File_Name (+Self.File_Prefix, Clause_Number) & "#" & Target, Self.In_Block_Tag));
    end Local_Link;
 
    -- Generate a local link to the target and clause given.
@@ -1143,7 +1143,7 @@ package body ARM_Ada_Lang_IO is
       --  Debugging.Trace (Self, "Clause Number: " & Clause_Number);
 
       -- todo: start link
-      Paragraph_Buffer.Append (Self, "<a href=""" & Relative_Link_Path (Self) & Make_Clause_File_Name (+Self.File_Prefix, Clause_Number) & "#" & Target & """>");
+      Paragraph_Buffer.Append (Self, "<a href=""" & Local_Link_Path (Self) & Make_Clause_File_Name (+Self.File_Prefix, Clause_Number) & "#" & Target & """>");
    end Local_Link_Start;
 
    -- End a local link for the target and clause given.

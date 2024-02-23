@@ -290,8 +290,7 @@ package body ARM_Ada_Lang_IO is
       end if;
    end Make_Clause_Target;
 
-   function Local_Link_Path (Self : in out Ada_Lang_IO_Output_Type) return String is
-      (if Self.In_Front_Matter then "" else "/docs/arm/");
+   function Local_Link_Path (Self : in out Ada_Lang_IO_Output_Type) return String is ("/docs/arm/");
 
    ----------------------------------------------------------------------------
 

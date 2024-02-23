@@ -161,7 +161,7 @@ package body ARM_Ada_Lang_IO is
 
    procedure Print_Manual_Warning (Self : in out Ada_Lang_IO_Output_Type) is
    begin
-      Immediate.Put_Line (Self, ":::warning");
+      Immediate.Put_Line (Self, ":::danger");
       Immediate.Put_Line (Self, "This Reference Manual output has not been verified,");
       Immediate.Put_Line (Self, "and may contain omissions or errors.");
       Immediate.Put_Line (Self, "Report any problems on the [tracking issue](https://github.com/ada-lang-io/ada-lang-io/issues/20)");

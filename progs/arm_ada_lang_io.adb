@@ -328,7 +328,7 @@ package body ARM_Ada_Lang_IO is
          Make_New_Sidebar (Self);
 
          if Subdir /= "" then
-            Put_Heading (Self, "# " & Clause_Number & " " & Header_Text);
+            Put_Heading (Self, "# " & Clause_Number & ". " & Header_Text);
          else
             Put_Heading (Self, "# " & Header_Text);
          end if;

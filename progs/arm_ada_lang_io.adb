@@ -961,19 +961,19 @@ package body ARM_Ada_Lang_IO is
             end if;
 
             if Format.Italic /= Self.Current_Format.Italic and then not Format.Italic then
-               Paragraph_Buffer.Append (Self, "</em>");
+               Paragraph_Buffer.Append (Self, "</i>");
             end if;
 
             if Format.Bold /= Self.Current_Format.Bold and then not Format.Bold then
-               Paragraph_Buffer.Append (Self, "</strong>");
+               Paragraph_Buffer.Append (Self, "</b>");
             end if;
 
             if Format.Bold /= Self.Current_Format.Bold and then Format.Bold then
-               Paragraph_Buffer.Append (Self, "<strong>");
+               Paragraph_Buffer.Append (Self, "<b>");
             end if;
 
             if Format.Italic /= Self.Current_Format.Italic and then Format.Italic then
-               Paragraph_Buffer.Append (Self, "<em>");
+               Paragraph_Buffer.Append (Self, "<i>");
             end if;
 
             if Format.Font = ARM_Output.Swiss and then Self.Current_Format.Font /= ARM_Output.Swiss then

@@ -22,10 +22,10 @@ package body ARM_Tracer is
    -- Indicate special information for development and debugging.
    procedure Trace (Message : String) is
    begin
-      Put_Line ("!!! " & Message);
+      Put_Line (Message);
    end Trace;
 
-   -- Mark a function as being called.  This causes it to be tracked in the 
+   -- Mark a function as being called.  This causes it to be tracked in the
    -- transitions list and also indicate in the call count that it was called.
    procedure Func (Self : in out Tracer_Output_Type; Name : String) is
       Converted_Name : constant Ada.Strings.Unbounded.Unbounded_String := Ada.Strings.Unbounded.To_Unbounded_String (Name);
@@ -41,7 +41,7 @@ package body ARM_Tracer is
       if not Self.Transitions.Contains (Self.Last_Func) then
          Self.Transitions.Insert (Self.Last_Func, String_Sets.Empty_Set);
       end if;
-      
+
       if not Self.Transitions (Self.Last_Func).Contains (Converted_Name) then
          Self.Transitions (Self.Last_Func).Insert (Converted_Name);
       end if;
@@ -58,7 +58,9 @@ package body ARM_Tracer is
       --  pragma Unreferenced (Property);
       --  pragma Unreferenced (Indent_Size);
       --  pragma Unreferenced (Indent_String);
-      --  Put_Line ("    " & Property);
+      Put_Line ("    " & Property
+         & " indent:" & Indent'Image
+         & " IndentSize:" & Indent_Size'Image);
       null;
    end Prop;
 
@@ -163,7 +165,7 @@ package body ARM_Tracer is
          & " " & Indent'Image
          & " " & Number
          & " " & Keep_With_Next'Image
-         & " " & Space_After'Image         
+         & " " & Space_After'Image
          & " " & Justification'Image
       );
       Func (Self, "Start_Paragraph");
@@ -176,7 +178,7 @@ package body ARM_Tracer is
    procedure End_Paragraph (Self : in out Tracer_Output_Type) is
    begin
       Trace ("End_Paragraph : " & Ada.Strings.Unbounded.To_String (Self.Buffer));
-      Func (Self, "End_Paragraph");      
+      Func (Self, "End_Paragraph");
 
       Self.Buffer := Ada.Strings.Unbounded.Null_Unbounded_String;
    end End_Paragraph;
@@ -189,7 +191,7 @@ package body ARM_Tracer is
    procedure Category_Header (
       Self : in out Tracer_Output_Type;
       Header_Text   : String
-   ) is 
+   ) is
    begin
       Func (Self, "Category_Header");
       Prop ("Header Text: " & Header_Text);
@@ -364,8 +366,8 @@ package body ARM_Tracer is
      (Self : in out Tracer_Output_Type; Char : in Character)
    is
    begin
-      Func (Self, "Ordinary_Character");
-      Prop ("Char: " & Char'Image);
+      --  Func (Self, "Ordinary_Character");
+      --  Prop ("Char: " & Char'Image);
 
       Ada.Strings.Unbounded.Append (Self.Buffer, Char);
       --  Trace ("Ordinary_Character " & Ada.Strings.Unbounded.To_String (Self.Buffer));
